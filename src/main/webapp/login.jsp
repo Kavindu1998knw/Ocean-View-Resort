@@ -237,7 +237,8 @@
       </form>
 
       <div class="footer">
-        New here? <a href="#">Create an account</a>
+        New here?
+        <a href="<%= request.getContextPath() %>/register.jsp">Create an account</a>
       </div>
     </main>
 
