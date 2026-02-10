@@ -1,4 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%
+  String registered = request.getParameter("registered");
+  boolean showRegistered = "1".equals(registered);
+%>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -23,6 +27,8 @@
         --border: #e5e7eb;
         --shadow: 0 20px 40px rgba(31, 41, 55, 0.12);
         --radius: 14px;
+        --success: #15803d;
+        --success-bg: #dcfce7;
       }
 
       * {
@@ -177,6 +183,15 @@
         text-decoration: underline;
       }
 
+      .notice {
+        background: var(--success-bg);
+        color: var(--success);
+        border: 1px solid #bbf7d0;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+      }
+
       @media (max-width: 420px) {
         .login-card {
           padding: 26px 20px;
@@ -192,6 +207,13 @@
       </div>
 
       <form action="#" method="post">
+        <%
+          if (showRegistered) {
+        %>
+        <div class="notice">Account created successfully. Please sign in.</div>
+        <%
+          }
+        %>
         <div>
           <label for="email">Email</label>
           <input

@@ -1,4 +1,29 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.List,java.util.Map" %>
+<%!
+  private String esc(String value) {
+    if (value == null) {
+      return "";
+    }
+    return value
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;");
+  }
+%>
+<%
+  List<String> errors = (List<String>) request.getAttribute("errors");
+  Map<String, String> fieldErrors = (Map<String, String>) request.getAttribute("fieldErrors");
+  if (fieldErrors == null) {
+    fieldErrors = new java.util.HashMap<>();
+  }
+  String fullNameVal = (String) request.getAttribute("fullName");
+  String usernameVal = (String) request.getAttribute("username");
+  String emailVal = (String) request.getAttribute("email");
+  String contactVal = (String) request.getAttribute("contact");
+  String roleVal = (String) request.getAttribute("role");
+%>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -25,6 +50,7 @@
         --radius: 14px;
         --error: #dc2626;
         --error-bg: #fee2e2;
+        --error-border: #fecaca;
       }
 
       * {
@@ -142,14 +168,27 @@
         color: var(--primary);
       }
 
-      .error-box {
-        display: none;
-        background: var(--error-bg);
-        color: var(--error);
-        border: 1px solid #fecaca;
-        padding: 10px 12px;
+      .alert {
+        padding: 12px 14px;
         border-radius: 10px;
         font-size: 13px;
+        border: 1px solid transparent;
+      }
+
+      .alert-danger {
+        background: var(--error-bg);
+        color: var(--error);
+        border-color: var(--error-border);
+      }
+
+      #errorBox {
+        display: none;
+      }
+
+      .input.is-invalid,
+      select.is-invalid {
+        border-color: var(--error);
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
       }
 
       .actions {
@@ -217,27 +256,38 @@
         <p class="subtitle">Staff Registration</p>
       </div>
 
-      <form id="registerForm" action="#" method="post" novalidate>
+      <form id="registerForm" action="register" method="post" novalidate>
+        <%
+          if (errors != null && !errors.isEmpty()) {
+        %>
+        <div class="alert alert-danger" role="alert">
+          <%= esc(errors.get(0)) %>
+        </div>
+        <%
+          }
+        %>
         <div class="row">
           <div>
             <label for="fullName">Full Name</label>
             <input
-              class="input"
+              class="input <%= fieldErrors.containsKey("fullName") ? "is-invalid" : "" %>"
               id="fullName"
               name="fullName"
               type="text"
               placeholder="Jane Doe"
+              value="<%= esc(fullNameVal) %>"
               required
             />
           </div>
           <div>
             <label for="username">Username</label>
             <input
-              class="input"
+              class="input <%= fieldErrors.containsKey("username") ? "is-invalid" : "" %>"
               id="username"
               name="username"
               type="text"
               placeholder="jane.doe"
+              value="<%= esc(usernameVal) %>"
               required
             />
           </div>
@@ -247,22 +297,24 @@
           <div>
             <label for="email">Email</label>
             <input
-              class="input"
+              class="input <%= fieldErrors.containsKey("email") ? "is-invalid" : "" %>"
               id="email"
               name="email"
               type="email"
               placeholder="you@oceanview.com"
+              value="<%= esc(emailVal) %>"
               required
             />
           </div>
           <div>
             <label for="contact">Contact Number</label>
             <input
-              class="input"
+              class="input <%= fieldErrors.containsKey("contact") ? "is-invalid" : "" %>"
               id="contact"
               name="contact"
               type="tel"
               placeholder="0712345678"
+              value="<%= esc(contactVal) %>"
               required
             />
           </div>
@@ -273,7 +325,7 @@
             <label for="password">Password</label>
             <div class="password-wrap">
               <input
-                class="input"
+                class="input <%= fieldErrors.containsKey("password") ? "is-invalid" : "" %>"
                 id="password"
                 name="password"
                 type="password"
@@ -297,7 +349,7 @@
             <label for="confirmPassword">Confirm Password</label>
             <div class="password-wrap">
               <input
-                class="input"
+                class="input <%= fieldErrors.containsKey("confirmPassword") ? "is-invalid" : "" %>"
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
@@ -321,15 +373,26 @@
 
         <div>
           <label for="role">Role</label>
-          <select id="role" name="role" required>
-            <option value="" selected disabled>Select role</option>
-            <option value="staff">Staff</option>
-            <option value="admin">Admin</option>
+          <select
+            id="role"
+            name="role"
+            class="<%= fieldErrors.containsKey("role") ? "is-invalid" : "" %>"
+            required
+          >
+            <option value="" <%= roleVal == null || roleVal.isEmpty() ? "selected" : "" %> disabled>
+              Select role
+            </option>
+            <option value="staff" <%= "staff".equals(roleVal) ? "selected" : "" %>>
+              Staff
+            </option>
+            <option value="admin" <%= "admin".equals(roleVal) ? "selected" : "" %>>
+              Admin
+            </option>
           </select>
         </div>
 
         <div class="actions">
-          <div id="errorBox" class="error-box"></div>
+          <div id="errorBox" class="alert alert-danger" role="alert"></div>
           <button class="btn" type="submit">Create Account</button>
           <div class="links">
             <a href="login.jsp">Already have an account? Login</a>
@@ -375,6 +438,9 @@
         errorBox.style.display = "none";
         errorBox.textContent = "";
 
+        const inputs = form.querySelectorAll(".input, select");
+        inputs.forEach((input) => input.classList.remove("is-invalid"));
+
         const fullName = document.getElementById("fullName").value.trim();
         const email = document.getElementById("email").value.trim();
         const username = document.getElementById("username").value.trim();
@@ -385,24 +451,50 @@
 
         const errors = [];
 
-        if (!fullName) errors.push("Full name is required.");
-        if (!email) errors.push("Email is required.");
-        if (!username) errors.push("Username is required.");
-        if (!contact) errors.push("Contact number is required.");
-        if (!password) errors.push("Password is required.");
-        if (!confirmPassword) errors.push("Confirm password is required.");
-        if (!role) errors.push("Role is required.");
+        if (!fullName) {
+          errors.push("Full name is required.");
+          document.getElementById("fullName").classList.add("is-invalid");
+        }
+        if (!email) {
+          errors.push("Email is required.");
+          document.getElementById("email").classList.add("is-invalid");
+        }
+        if (!username) {
+          errors.push("Username is required.");
+          document.getElementById("username").classList.add("is-invalid");
+        }
+        if (!contact) {
+          errors.push("Contact number is required.");
+          document.getElementById("contact").classList.add("is-invalid");
+        }
+        if (!password) {
+          errors.push("Password is required.");
+          document.getElementById("password").classList.add("is-invalid");
+        }
+        if (!confirmPassword) {
+          errors.push("Confirm password is required.");
+          document.getElementById("confirmPassword").classList.add("is-invalid");
+        }
+        if (!role) {
+          errors.push("Role is required.");
+          document.getElementById("role").classList.add("is-invalid");
+        }
 
         if (contact && !/^\d{9,12}$/.test(contact)) {
           errors.push("Contact number must be 9 to 12 digits.");
+          document.getElementById("contact").classList.add("is-invalid");
         }
 
         if (password && password.length < 8) {
           errors.push("Password must be at least 8 characters.");
+          document.getElementById("password").classList.add("is-invalid");
         }
 
         if (password && confirmPassword && password !== confirmPassword) {
           errors.push("Passwords do not match.");
+          document
+            .getElementById("confirmPassword")
+            .classList.add("is-invalid");
         }
 
         if (errors.length > 0) {
