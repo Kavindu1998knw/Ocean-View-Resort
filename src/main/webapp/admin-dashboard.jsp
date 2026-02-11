@@ -276,7 +276,6 @@
                 <a class="nav-link" href="/reservations"><span class="dot"></span>View Reservations</a>
                 <a class="nav-link" href="#searchReservation"><span class="dot"></span>Search Reservation by Number</a>
                 <a class="nav-link" href="/bill"><span class="dot"></span>Calculate &amp; Print Bill</a>
-                <a class="nav-link" href="help.jsp"><span class="dot"></span>Help</a>
                 <a class="nav-link" href="/users"><span class="dot"></span>Manage Staff Users</a>
                 <a class="nav-link" href="/logout"><span class="dot"></span>Exit / Logout</a>
             </nav>

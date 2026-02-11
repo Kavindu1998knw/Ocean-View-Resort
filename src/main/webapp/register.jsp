@@ -396,7 +396,6 @@
           <button class="btn" type="submit">Create Account</button>
           <div class="links">
             <a href="login.jsp">Already have an account? Login</a>
-            <a href="forgot-password.jsp">Forgot password?</a>
           </div>
         </div>
       </form>
