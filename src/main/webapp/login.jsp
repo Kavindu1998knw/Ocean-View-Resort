@@ -2,6 +2,7 @@
 <%
   String registered = request.getParameter("registered");
   boolean showRegistered = "1".equals(registered);
+  String error = (String) request.getAttribute("error");
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -192,6 +193,15 @@
         font-size: 13px;
       }
 
+      .error {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+      }
+
       @media (max-width: 420px) {
         .login-card {
           padding: 26px 20px;
@@ -206,11 +216,18 @@
         <p>Sign in to continue</p>
       </div>
 
-      <form action="#" method="post">
+      <form action="<%= request.getContextPath() %>/login" method="post">
         <%
           if (showRegistered) {
         %>
         <div class="notice">Account created successfully. Please sign in.</div>
+        <%
+          }
+        %>
+        <%
+          if (error != null) {
+        %>
+        <div class="error"><%= error %></div>
         <%
           }
         %>
