@@ -1,6 +1,13 @@
 package com.icbt.oceanview.controller;
 
+import com.icbt.oceanview.dao.ReservationDAO;
+import com.icbt.oceanview.model.Reservation;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -8,22 +15,182 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-@WebServlet("/admin/reservation/new")
+@WebServlet("/admin/reservation")
 public class AddReservationServlet extends HttpServlet {
+  private static final Pattern EMAIL_PATTERN =
+      Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    System.out.println("HIT: /admin/reservation/new");
+    if (!isAdmin(request)) {
+      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      return;
+    }
+    request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
+  }
 
-    HttpSession session = request.getSession(false);
-    Object role = session == null ? null : session.getAttribute("role");
-
-    if (role == null || !"ADMIN".equalsIgnoreCase(String.valueOf(role))) {
+  @Override
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    request.setCharacterEncoding("UTF-8");
+    if (!isAdmin(request)) {
       response.sendRedirect(request.getContextPath() + "/login.jsp");
       return;
     }
 
+    String guestFullName = trimParam(request, "guestFullName");
+    String guestEmail = trimParam(request, "guestEmail");
+    String contactNumber = trimParam(request, "contactNumber");
+    String roomType = trimParam(request, "roomType");
+    String numberOfGuestsRaw = trimParam(request, "numberOfGuests");
+    String checkInDateRaw = trimParam(request, "checkInDate");
+    String checkOutDateRaw = trimParam(request, "checkOutDate");
+    String specialRequests = trimParam(request, "specialRequests");
+    String status = trimParam(request, "status");
+    if (status.isEmpty()) {
+      status = trimParam(request, "reservationStatus");
+    }
+
+    preserveFormValues(
+        request,
+        guestFullName,
+        guestEmail,
+        contactNumber,
+        roomType,
+        numberOfGuestsRaw,
+        checkInDateRaw,
+        checkOutDateRaw,
+        specialRequests,
+        status);
+
+    if (isBlank(guestFullName)
+        || isBlank(guestEmail)
+        || isBlank(contactNumber)
+        || isBlank(roomType)
+        || isBlank(numberOfGuestsRaw)
+        || isBlank(checkInDateRaw)
+        || isBlank(checkOutDateRaw)) {
+      forwardWithError(request, response, "Please fill all required fields.");
+      return;
+    }
+
+    if (!EMAIL_PATTERN.matcher(guestEmail).matches()) {
+      forwardWithError(request, response, "Please enter a valid email address.");
+      return;
+    }
+
+    int numberOfGuests;
+    try {
+      numberOfGuests = Integer.parseInt(numberOfGuestsRaw);
+    } catch (NumberFormatException e) {
+      forwardWithError(request, response, "Number of guests must be a valid number.");
+      return;
+    }
+    if (numberOfGuests < 1) {
+      forwardWithError(request, response, "Number of guests must be at least 1.");
+      return;
+    }
+
+    LocalDate checkInDate;
+    LocalDate checkOutDate;
+    try {
+      checkInDate = LocalDate.parse(checkInDateRaw);
+      checkOutDate = LocalDate.parse(checkOutDateRaw);
+    } catch (DateTimeParseException e) {
+      forwardWithError(request, response, "Please enter valid check-in and check-out dates.");
+      return;
+    }
+
+    if (!checkInDate.isBefore(checkOutDate)) {
+      forwardWithError(request, response, "Check-in date must be earlier than check-out date.");
+      return;
+    }
+
+    if (!isBlank(status)) {
+      String normalizedStatus = status.toUpperCase(Locale.ROOT);
+      if (!"PENDING".equals(normalizedStatus)
+          && !"CONFIRMED".equals(normalizedStatus)
+          && !"CANCELLED".equals(normalizedStatus)) {
+        forwardWithError(request, response, "Invalid reservation status.");
+        return;
+      }
+      status = normalizedStatus;
+    }
+
+    ReservationDAO reservationDAO = new ReservationDAO();
+    String reservationNo = reservationDAO.generateReservationNo();
+    if (reservationNo == null) {
+      forwardWithError(request, response, "Unable to generate reservation number. Please try again.");
+      return;
+    }
+
+    Reservation reservation =
+        Reservation.newForCreate(
+            reservationNo,
+            guestFullName,
+            guestEmail,
+            contactNumber,
+            roomType,
+            numberOfGuests,
+            checkInDate,
+            checkOutDate,
+            specialRequests,
+            status,
+            LocalDateTime.now());
+
+    boolean saved = reservationDAO.insert(reservation);
+    if (saved) {
+      request.setAttribute("success", "Reservation created successfully.");
+      request.setAttribute("reservationNo", reservationNo);
+    } else {
+      request.setAttribute("error", "Failed to create reservation. Please try again.");
+    }
+
     request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
+  }
+
+  private boolean isAdmin(HttpServletRequest request) {
+    HttpSession session = request.getSession(false);
+    Object role = session == null ? null : session.getAttribute("role");
+    return role != null && "ADMIN".equalsIgnoreCase(String.valueOf(role));
+  }
+
+  private void preserveFormValues(
+      HttpServletRequest request,
+      String guestFullName,
+      String guestEmail,
+      String contactNumber,
+      String roomType,
+      String numberOfGuests,
+      String checkInDate,
+      String checkOutDate,
+      String specialRequests,
+      String status) {
+    request.setAttribute("guestFullName", guestFullName);
+    request.setAttribute("guestEmail", guestEmail);
+    request.setAttribute("contactNumber", contactNumber);
+    request.setAttribute("roomType", roomType);
+    request.setAttribute("numberOfGuests", numberOfGuests);
+    request.setAttribute("checkInDate", checkInDate);
+    request.setAttribute("checkOutDate", checkOutDate);
+    request.setAttribute("specialRequests", specialRequests);
+    request.setAttribute("reservationStatus", status);
+  }
+
+  private void forwardWithError(
+      HttpServletRequest request, HttpServletResponse response, String message)
+      throws ServletException, IOException {
+    request.setAttribute("error", message);
+    request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
+  }
+
+  private String trimParam(HttpServletRequest request, String name) {
+    String value = request.getParameter(name);
+    return value == null ? "" : value.trim();
+  }
+
+  private boolean isBlank(String value) {
+    return value == null || value.trim().isEmpty();
   }
 }

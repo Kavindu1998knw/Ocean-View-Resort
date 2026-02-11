@@ -275,7 +275,7 @@
             <div class="sidebar-title">Admin Menu</div>
             <nav class="nav flex-column">
                 <a class="nav-link active" href="<%= contextPath %>/admin/dashboard"><span class="dot"></span>Dashboard</a>
-                <a class="nav-link" href="${pageContext.request.contextPath}/admin/reservation/new"><span class="dot"></span>Add New Reservation</a>
+                <a class="nav-link" href="${pageContext.request.contextPath}/admin/reservation"><span class="dot"></span>Add New Reservation</a>
                 <a class="nav-link" href="<%= contextPath %>/reservations"><span class="dot"></span>View Reservations</a>
                 <a class="nav-link" href="#searchReservation"><span class="dot"></span>Search Reservation by Number</a>
                 <a class="nav-link" href="<%= contextPath %>/bill"><span class="dot"></span>Calculate &amp; Print Bill</a>
@@ -425,7 +425,7 @@
                     <div class="card-body">
                         <h5 class="mb-3">Quick Actions</h5>
                         <div class="d-grid gap-2">
-                            <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/reservation/new">Add New Reservation</a>
+                            <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/reservation">Add New Reservation</a>
                             <a class="btn btn-outline-primary" href="<%= contextPath %>/bill">Calculate &amp; Print Bill</a>
                             <a class="btn btn-outline-primary" href="<%= contextPath %>/users">Manage Staff Users</a>
                         </div>

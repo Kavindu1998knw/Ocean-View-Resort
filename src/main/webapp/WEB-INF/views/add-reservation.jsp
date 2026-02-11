@@ -52,6 +52,16 @@
 
     <% String errorMsg = (String) request.getAttribute("error"); %>
     <% String successMsg = (String) request.getAttribute("success"); %>
+    <% String reservationNoVal = request.getAttribute("reservationNo") == null ? "" : String.valueOf(request.getAttribute("reservationNo")); %>
+    <% String guestFullNameVal = request.getAttribute("guestFullName") == null ? "" : String.valueOf(request.getAttribute("guestFullName")); %>
+    <% String guestEmailVal = request.getAttribute("guestEmail") == null ? "" : String.valueOf(request.getAttribute("guestEmail")); %>
+    <% String contactNumberVal = request.getAttribute("contactNumber") == null ? "" : String.valueOf(request.getAttribute("contactNumber")); %>
+    <% String roomTypeVal = request.getAttribute("roomType") == null ? "" : String.valueOf(request.getAttribute("roomType")); %>
+    <% String numberOfGuestsVal = request.getAttribute("numberOfGuests") == null ? "1" : String.valueOf(request.getAttribute("numberOfGuests")); %>
+    <% String checkInDateVal = request.getAttribute("checkInDate") == null ? "" : String.valueOf(request.getAttribute("checkInDate")); %>
+    <% String checkOutDateVal = request.getAttribute("checkOutDate") == null ? "" : String.valueOf(request.getAttribute("checkOutDate")); %>
+    <% String specialRequestsVal = request.getAttribute("specialRequests") == null ? "" : String.valueOf(request.getAttribute("specialRequests")); %>
+    <% String reservationStatusVal = request.getAttribute("reservationStatus") == null ? "PENDING" : String.valueOf(request.getAttribute("reservationStatus")); %>
 
     <% if (errorMsg != null && !errorMsg.trim().isEmpty()) { %>
         <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
@@ -63,7 +73,7 @@
 
     <div class="card form-card">
         <div class="card-body p-4 p-md-5">
-            <form action="${pageContext.request.contextPath}/admin/reservation/save" method="POST" class="row g-3">
+            <form action="${pageContext.request.contextPath}/admin/reservation" method="POST" class="row g-3">
                 <div class="col-md-6">
                     <label for="reservationNumber" class="form-label">Reservation Number</label>
                     <input
@@ -71,6 +81,7 @@
                         class="form-control"
                         id="reservationNumber"
                         name="reservationNumber"
+                        value="<%= reservationNoVal %>"
                         placeholder="Auto-generated on save"
                         readonly
                     />
@@ -83,6 +94,7 @@
                         class="form-control"
                         id="guestFullName"
                         name="guestFullName"
+                        value="<%= guestFullNameVal %>"
                         placeholder="e.g., John Fernando"
                         required
                     />
@@ -95,6 +107,7 @@
                         class="form-control"
                         id="guestEmail"
                         name="guestEmail"
+                        value="<%= guestEmailVal %>"
                         placeholder="e.g., john@email.com"
                         required
                     />
@@ -107,6 +120,7 @@
                         class="form-control"
                         id="contactNumber"
                         name="contactNumber"
+                        value="<%= contactNumberVal %>"
                         placeholder="e.g., +94 77 123 4567"
                         required
                     />
@@ -115,11 +129,11 @@
                 <div class="col-md-6">
                     <label for="roomType" class="form-label required">Room Type</label>
                     <select id="roomType" name="roomType" class="form-select" required>
-                        <option value="" selected disabled>Select room type</option>
-                        <option value="Single">Single</option>
-                        <option value="Double">Double</option>
-                        <option value="Deluxe">Deluxe</option>
-                        <option value="Suite">Suite</option>
+                        <option value="" <%= roomTypeVal.isEmpty() ? "selected" : "" %> disabled>Select room type</option>
+                        <option value="Single" <%= "Single".equalsIgnoreCase(roomTypeVal) ? "selected" : "" %>>Single</option>
+                        <option value="Double" <%= "Double".equalsIgnoreCase(roomTypeVal) ? "selected" : "" %>>Double</option>
+                        <option value="Deluxe" <%= "Deluxe".equalsIgnoreCase(roomTypeVal) ? "selected" : "" %>>Deluxe</option>
+                        <option value="Suite" <%= "Suite".equalsIgnoreCase(roomTypeVal) ? "selected" : "" %>>Suite</option>
                     </select>
                 </div>
 
@@ -131,7 +145,7 @@
                         id="numberOfGuests"
                         name="numberOfGuests"
                         min="1"
-                        value="1"
+                        value="<%= numberOfGuestsVal %>"
                         required
                     />
                 </div>
@@ -143,6 +157,7 @@
                         class="form-control"
                         id="checkInDate"
                         name="checkInDate"
+                        value="<%= checkInDateVal %>"
                         required
                     />
                 </div>
@@ -154,6 +169,7 @@
                         class="form-control"
                         id="checkOutDate"
                         name="checkOutDate"
+                        value="<%= checkOutDateVal %>"
                         required
                     />
                 </div>
@@ -166,14 +182,14 @@
                         class="form-control"
                         rows="4"
                         placeholder="Any preferences, arrival notes, accessibility needs, etc. (optional)"
-                    ></textarea>
+                    ><%= specialRequestsVal %></textarea>
                 </div>
 
                 <div class="col-md-6">
                     <label for="reservationStatus" class="form-label required">Reservation Status</label>
                     <select id="reservationStatus" name="reservationStatus" class="form-select" required>
-                        <option value="PENDING" selected>PENDING</option>
-                        <option value="CONFIRMED">CONFIRMED</option>
+                        <option value="PENDING" <%= "PENDING".equalsIgnoreCase(reservationStatusVal) ? "selected" : "" %>>PENDING</option>
+                        <option value="CONFIRMED" <%= "CONFIRMED".equalsIgnoreCase(reservationStatusVal) ? "selected" : "" %>>CONFIRMED</option>
                     </select>
                 </div>
 
