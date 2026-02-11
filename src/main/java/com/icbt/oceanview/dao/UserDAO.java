@@ -41,7 +41,7 @@ public class UserDAO {
         }
 
         User user =
-            new User(
+            User.fromDb(
                 resultSet.getInt("id"),
                 resultSet.getString("name"),
                 resultSet.getString("email"),

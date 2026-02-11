@@ -125,7 +125,7 @@ public class RegisterServlet extends HttpServlet {
       return;
     }
 
-    User user = new User(fullName, email, hashedPassword, role, true, LocalDateTime.now());
+    User user = User.newForRegistration(fullName, email, hashedPassword, role, true, LocalDateTime.now());
     boolean created = userDAO.insert(user);
 
     if (created) {

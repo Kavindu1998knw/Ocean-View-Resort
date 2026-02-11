@@ -1,15 +1,18 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="false" isELIgnored="false" %>
 <%
-    // Access control: admin-only
-    if (session == null || session.getAttribute("role") == null ||
-        !"ADMIN".equalsIgnoreCase(String.valueOf(session.getAttribute("role")))) {
-        response.sendRedirect("login.jsp");
-        return;
-    }
+    javax.servlet.http.HttpSession currentSession = request.getSession(false);
+    Object loggedUserAttr = (currentSession != null) ? currentSession.getAttribute("loggedUser") : null;
 
-    String loggedUser = (session.getAttribute("loggedUser") != null)
-        ? String.valueOf(session.getAttribute("loggedUser"))
-        : "Admin";
+    String loggedUser = "Admin";
+    if (loggedUserAttr instanceof com.icbt.oceanview.model.User) {
+        com.icbt.oceanview.model.User sessionUser = (com.icbt.oceanview.model.User) loggedUserAttr;
+        if (sessionUser.getName() != null && !sessionUser.getName().trim().isEmpty()) {
+            loggedUser = sessionUser.getName();
+        }
+    } else if (loggedUserAttr != null) {
+        loggedUser = String.valueOf(loggedUserAttr);
+    }
+    String contextPath = request.getContextPath();
 
     String successMsg = (request.getAttribute("success") != null)
         ? String.valueOf(request.getAttribute("success"))
@@ -247,7 +250,7 @@
 <body>
 <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
-        <a class="navbar-brand text-white" href="admin-dashboard.jsp">Ocean View Resort</a>
+        <a class="navbar-brand text-white" href="<%= contextPath %>/admin/dashboard">Ocean View Resort</a>
         <button
             class="navbar-toggler text-white"
             type="button"
@@ -261,7 +264,7 @@
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
             <span class="navbar-text me-3">Logged in as <strong><%= loggedUser %></strong></span>
-            <a class="nav-link" href="/logout">Logout</a>
+            <a class="nav-link" href="<%= contextPath %>/logout">Logout</a>
         </div>
     </div>
 </nav>
@@ -271,13 +274,13 @@
         <div class="w-100">
             <div class="sidebar-title">Admin Menu</div>
             <nav class="nav flex-column">
-                <a class="nav-link active" href="admin-dashboard.jsp"><span class="dot"></span>Dashboard</a>
-                <a class="nav-link" href="/reservation/new"><span class="dot"></span>Add New Reservation</a>
-                <a class="nav-link" href="/reservations"><span class="dot"></span>View Reservations</a>
+                <a class="nav-link active" href="<%= contextPath %>/admin/dashboard"><span class="dot"></span>Dashboard</a>
+                <a class="nav-link" href="${pageContext.request.contextPath}/admin/reservation/new"><span class="dot"></span>Add New Reservation</a>
+                <a class="nav-link" href="<%= contextPath %>/reservations"><span class="dot"></span>View Reservations</a>
                 <a class="nav-link" href="#searchReservation"><span class="dot"></span>Search Reservation by Number</a>
-                <a class="nav-link" href="/bill"><span class="dot"></span>Calculate &amp; Print Bill</a>
-                <a class="nav-link" href="/users"><span class="dot"></span>Manage Staff Users</a>
-                <a class="nav-link" href="/logout"><span class="dot"></span>Exit / Logout</a>
+                <a class="nav-link" href="<%= contextPath %>/bill"><span class="dot"></span>Calculate &amp; Print Bill</a>
+                <a class="nav-link" href="<%= contextPath %>/users"><span class="dot"></span>Manage Staff Users</a>
+                <a class="nav-link" href="<%= contextPath %>/logout"><span class="dot"></span>Exit / Logout</a>
             </nav>
         </div>
     </aside>
@@ -340,7 +343,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0">Recent Reservations</h5>
-                            <a class="btn btn-sm btn-outline-primary" href="/reservations">View all</a>
+                            <a class="btn btn-sm btn-outline-primary" href="<%= contextPath %>/reservations">View all</a>
                         </div>
                         <div class="table-responsive">
                             <table class="table align-middle mb-0">
@@ -405,7 +408,7 @@
             <div class="col-12 col-xl-4">
                 <div id="searchReservation" class="search-card mb-4">
                     <h5 class="mb-3">Search Reservation</h5>
-                    <form class="d-flex flex-column gap-2" action="/reservations" method="get">
+                    <form class="d-flex flex-column gap-2" action="<%= contextPath %>/reservations" method="get">
                         <label for="reservationNo" class="form-label">Reservation Number</label>
                         <input
                             type="text"
@@ -422,9 +425,9 @@
                     <div class="card-body">
                         <h5 class="mb-3">Quick Actions</h5>
                         <div class="d-grid gap-2">
-                            <a class="btn btn-outline-primary" href="/reservation/new">Add New Reservation</a>
-                            <a class="btn btn-outline-primary" href="/bill">Calculate &amp; Print Bill</a>
-                            <a class="btn btn-outline-primary" href="/users">Manage Staff Users</a>
+                            <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/reservation/new">Add New Reservation</a>
+                            <a class="btn btn-outline-primary" href="<%= contextPath %>/bill">Calculate &amp; Print Bill</a>
+                            <a class="btn btn-outline-primary" href="<%= contextPath %>/users">Manage Staff Users</a>
                         </div>
                     </div>
                 </div>
@@ -438,3 +441,4 @@
         crossorigin="anonymous"></script>
 </body>
 </html>
+

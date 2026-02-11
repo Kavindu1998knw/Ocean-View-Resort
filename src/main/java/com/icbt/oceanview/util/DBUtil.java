@@ -8,7 +8,7 @@ public final class DBUtil {
   private DBUtil() {}
 
   private static final String URL =
-      "jdbc:mysql://localhost:3306/ocean_view_resort?useSSL=false&serverTimezone=UTC";
+      "jdbc:mysql://localhost:3306/ocean_view_resort?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
   private static final String USER = "root";
   private static final String PASSWORD = "123456";
 

@@ -14,21 +14,6 @@ public class User {
   public User() {}
 
   public User(
-      String name,
-      String email,
-      String password,
-      String role,
-      boolean active,
-      LocalDateTime createdAt) {
-    this.name = name;
-    this.email = email;
-    this.password = password;
-    this.role = role;
-    this.active = active;
-    this.createdAt = createdAt;
-  }
-
-  public User(
       int id,
       String name,
       String email,
@@ -43,6 +28,27 @@ public class User {
     this.role = role;
     this.active = active;
     this.createdAt = createdAt;
+  }
+
+  public static User newForRegistration(
+      String name,
+      String email,
+      String password,
+      String role,
+      boolean active,
+      LocalDateTime createdAt) {
+    return new User(0, name, email, password, role, active, createdAt);
+  }
+
+  public static User fromDb(
+      int id,
+      String name,
+      String email,
+      String password,
+      String role,
+      boolean active,
+      LocalDateTime createdAt) {
+    return new User(id, name, email, password, role, active, createdAt);
   }
 
   public int getId() {

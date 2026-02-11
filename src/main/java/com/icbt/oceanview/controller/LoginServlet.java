@@ -67,13 +67,13 @@ public class LoginServlet extends HttpServlet {
     }
 
     HttpSession session = request.getSession(true);
-    session.setAttribute("loggedUser", user.getName());
+    session.setAttribute("loggedUser", user);
     session.setAttribute("role", user.getRole());
     session.setAttribute("userId", user.getId());
 
     String role = user.getRole() == null ? "" : user.getRole();
     if ("ADMIN".equalsIgnoreCase(role)) {
-      response.sendRedirect(request.getContextPath() + "/admin-dashboard.jsp");
+      response.sendRedirect(request.getContextPath() + "/admin/dashboard");
     } else {
       response.sendRedirect(request.getContextPath() + "/index.jsp");
     }
