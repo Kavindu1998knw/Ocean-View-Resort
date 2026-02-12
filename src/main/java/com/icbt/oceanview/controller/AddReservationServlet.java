@@ -2,6 +2,7 @@ package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.ReservationDAO;
 import com.icbt.oceanview.model.Reservation;
+import com.icbt.oceanview.util.RoomTypes;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ public class AddReservationServlet extends HttpServlet {
       response.sendRedirect(request.getContextPath() + "/login.jsp");
       return;
     }
+    setRoomTypes(request);
     request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
   }
 
@@ -147,6 +149,7 @@ public class AddReservationServlet extends HttpServlet {
       request.setAttribute("error", "Failed to create reservation. Please try again.");
     }
 
+    setRoomTypes(request);
     request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
   }
 
@@ -182,7 +185,12 @@ public class AddReservationServlet extends HttpServlet {
       HttpServletRequest request, HttpServletResponse response, String message)
       throws ServletException, IOException {
     request.setAttribute("error", message);
+    setRoomTypes(request);
     request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
+  }
+
+  private void setRoomTypes(HttpServletRequest request) {
+    request.setAttribute("roomTypes", RoomTypes.ROOM_TYPES);
   }
 
   private String trimParam(HttpServletRequest request, String name) {

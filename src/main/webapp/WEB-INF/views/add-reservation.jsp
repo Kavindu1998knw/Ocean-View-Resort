@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,7 +57,6 @@
     <% String guestFullNameVal = request.getAttribute("guestFullName") == null ? "" : String.valueOf(request.getAttribute("guestFullName")); %>
     <% String guestEmailVal = request.getAttribute("guestEmail") == null ? "" : String.valueOf(request.getAttribute("guestEmail")); %>
     <% String contactNumberVal = request.getAttribute("contactNumber") == null ? "" : String.valueOf(request.getAttribute("contactNumber")); %>
-    <% String roomTypeVal = request.getAttribute("roomType") == null ? "" : String.valueOf(request.getAttribute("roomType")); %>
     <% String numberOfGuestsVal = request.getAttribute("numberOfGuests") == null ? "1" : String.valueOf(request.getAttribute("numberOfGuests")); %>
     <% String checkInDateVal = request.getAttribute("checkInDate") == null ? "" : String.valueOf(request.getAttribute("checkInDate")); %>
     <% String checkOutDateVal = request.getAttribute("checkOutDate") == null ? "" : String.valueOf(request.getAttribute("checkOutDate")); %>
@@ -129,11 +129,10 @@
                 <div class="col-md-6">
                     <label for="roomType" class="form-label required">Room Type</label>
                     <select id="roomType" name="roomType" class="form-select" required>
-                        <option value="" <%= roomTypeVal.isEmpty() ? "selected" : "" %> disabled>Select room type</option>
-                        <option value="Single" <%= "Single".equalsIgnoreCase(roomTypeVal) ? "selected" : "" %>>Single</option>
-                        <option value="Double" <%= "Double".equalsIgnoreCase(roomTypeVal) ? "selected" : "" %>>Double</option>
-                        <option value="Deluxe" <%= "Deluxe".equalsIgnoreCase(roomTypeVal) ? "selected" : "" %>>Deluxe</option>
-                        <option value="Suite" <%= "Suite".equalsIgnoreCase(roomTypeVal) ? "selected" : "" %>>Suite</option>
+                        <option value="" ${empty roomType ? 'selected' : ''} disabled>Select room type</option>
+                        <c:forEach var="type" items="${roomTypes}">
+                            <option value="${type}" ${type == roomType ? 'selected' : ''}>${type}</option>
+                        </c:forEach>
                     </select>
                 </div>
 

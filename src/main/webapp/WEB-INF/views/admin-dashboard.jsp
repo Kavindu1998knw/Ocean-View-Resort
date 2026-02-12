@@ -276,7 +276,7 @@
             <nav class="nav flex-column">
                 <a class="nav-link active" href="<%= contextPath %>/admin/dashboard"><span class="dot"></span>Dashboard</a>
                 <a class="nav-link" href="${pageContext.request.contextPath}/admin/reservation"><span class="dot"></span>Add New Reservation</a>
-                <a class="nav-link" href="<%= contextPath %>/reservations"><span class="dot"></span>View Reservations</a>
+                <a class="nav-link" href="<%= contextPath %>/admin/reservations"><span class="dot"></span>View Reservations</a>
                 <a class="nav-link" href="#searchReservation"><span class="dot"></span>Search Reservation by Number</a>
                 <a class="nav-link" href="<%= contextPath %>/bill"><span class="dot"></span>Calculate &amp; Print Bill</a>
                 <a class="nav-link" href="<%= contextPath %>/users"><span class="dot"></span>Manage Staff Users</a>
@@ -343,7 +343,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0">Recent Reservations</h5>
-                            <a class="btn btn-sm btn-outline-primary" href="<%= contextPath %>/reservations">View all</a>
+                            <a class="btn btn-sm btn-outline-primary" href="<%= contextPath %>/admin/reservations">View all</a>
                         </div>
                         <div class="table-responsive">
                             <table class="table align-middle mb-0">
@@ -408,7 +408,7 @@
             <div class="col-12 col-xl-4">
                 <div id="searchReservation" class="search-card mb-4">
                     <h5 class="mb-3">Search Reservation</h5>
-                    <form class="d-flex flex-column gap-2" action="<%= contextPath %>/reservations" method="get">
+                    <form class="d-flex flex-column gap-2" action="<%= contextPath %>/admin/reservations" method="get">
                         <label for="reservationNo" class="form-label">Reservation Number</label>
                         <input
                             type="text"
