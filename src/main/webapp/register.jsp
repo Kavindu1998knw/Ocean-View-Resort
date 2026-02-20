@@ -22,7 +22,6 @@
   String usernameVal = (String) request.getAttribute("username");
   String emailVal = (String) request.getAttribute("email");
   String contactVal = (String) request.getAttribute("contact");
-  String roleVal = (String) request.getAttribute("role");
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -371,25 +370,8 @@
           </div>
         </div>
 
-        <div>
-          <label for="role">Role</label>
-          <select
-            id="role"
-            name="role"
-            class="<%= fieldErrors.containsKey("role") ? "is-invalid" : "" %>"
-            required
-          >
-            <option value="" <%= roleVal == null || roleVal.isEmpty() ? "selected" : "" %> disabled>
-              Select role
-            </option>
-            <option value="staff" <%= "staff".equals(roleVal) ? "selected" : "" %>>
-              Staff
-            </option>
-            <option value="admin" <%= "admin".equals(roleVal) ? "selected" : "" %>>
-              Admin
-            </option>
-          </select>
-        </div>
+        <input type="hidden" name="role" value="STAFF" />
+        <p class="subtitle" style="margin-top: -6px;">Accounts are created as Staff.</p>
 
         <div class="actions">
           <div id="errorBox" class="alert alert-danger" role="alert"></div>
@@ -446,7 +428,6 @@
         const contact = document.getElementById("contact").value.trim();
         const password = document.getElementById("password").value;
         const confirmPassword = document.getElementById("confirmPassword").value;
-        const role = document.getElementById("role").value;
 
         const errors = [];
 
@@ -473,10 +454,6 @@
         if (!confirmPassword) {
           errors.push("Confirm password is required.");
           document.getElementById("confirmPassword").classList.add("is-invalid");
-        }
-        if (!role) {
-          errors.push("Role is required.");
-          document.getElementById("role").classList.add("is-invalid");
         }
 
         if (contact && !/^\d{9,12}$/.test(contact)) {

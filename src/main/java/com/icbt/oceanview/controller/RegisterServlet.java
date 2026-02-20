@@ -33,7 +33,7 @@ public class RegisterServlet extends HttpServlet {
     String contact = trimParam(request, "contact");
     String password = request.getParameter("password");
     String confirmPassword = request.getParameter("confirmPassword");
-    String role = trimParam(request, "role");
+    String role = "STAFF";
 
     Map<String, String> fieldErrors = new HashMap<>();
     List<String> errors = new ArrayList<>();
@@ -56,10 +56,6 @@ public class RegisterServlet extends HttpServlet {
     if (isBlank(confirmPassword)) {
       fieldErrors.put("confirmPassword", "Confirm password is required.");
     }
-    if (isBlank(role)) {
-      fieldErrors.put("role", "Role is required.");
-    }
-
     if (!isBlank(email) && !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
       fieldErrors.put("email", "Enter a valid email address.");
     }
@@ -86,8 +82,7 @@ public class RegisterServlet extends HttpServlet {
           fullName,
           username,
           email,
-          contact,
-          role);
+          contact);
       return;
     }
 
@@ -103,8 +98,7 @@ public class RegisterServlet extends HttpServlet {
           fullName,
           username,
           email,
-          contact,
-          role);
+          contact);
       return;
     }
 
@@ -120,8 +114,7 @@ public class RegisterServlet extends HttpServlet {
           fullName,
           username,
           email,
-          contact,
-          role);
+          contact);
       return;
     }
 
@@ -141,8 +134,7 @@ public class RegisterServlet extends HttpServlet {
         fullName,
         username,
         email,
-        contact,
-        role);
+        contact);
   }
 
   private String trimParam(HttpServletRequest request, String name) {
@@ -162,8 +154,7 @@ public class RegisterServlet extends HttpServlet {
       String fullName,
       String username,
       String email,
-      String contact,
-      String role)
+      String contact)
       throws ServletException, IOException {
     request.setAttribute("errors", messages);
     request.setAttribute("fieldErrors", fieldErrors);
@@ -171,7 +162,6 @@ public class RegisterServlet extends HttpServlet {
     request.setAttribute("username", username);
     request.setAttribute("email", email);
     request.setAttribute("contact", contact);
-    request.setAttribute("role", role);
     request.getRequestDispatcher("register.jsp").forward(request, response);
   }
 
