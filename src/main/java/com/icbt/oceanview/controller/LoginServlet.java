@@ -45,7 +45,9 @@ public class LoginServlet extends HttpServlet {
     }
 
     HttpSession session = request.getSession(true);
-    session.setAttribute("user", user);
+    session.setAttribute("authUser", user);
+    session.setAttribute("authName", user.getName());
+    session.setAttribute("authRole", user.getRole());
 
     String role = user.getRole() == null ? "" : user.getRole().trim();
     if ("ADMIN".equalsIgnoreCase(role)) {

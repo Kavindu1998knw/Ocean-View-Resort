@@ -11,7 +11,7 @@
     <div class="user-info">
         <span>
             Logged in as 
-            <strong>${sessionScope.user.name}</strong>
+            <strong>${not empty loggedUserName ? loggedUserName : sessionScope.authName}</strong>
         </span>
 
         <a href="${pageContext.request.contextPath}/logout"

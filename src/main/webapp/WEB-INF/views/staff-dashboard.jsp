@@ -20,7 +20,7 @@
     <div class="user-info">
         <span>
             Logged in as
-            <strong>${sessionScope.user.name}</strong>
+            <strong>${sessionScope.authName}</strong>
         </span>
         <a href="${pageContext.request.contextPath}/logout"
            class="logout-btn"

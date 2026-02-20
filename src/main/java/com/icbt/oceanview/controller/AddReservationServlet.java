@@ -193,7 +193,7 @@ public class AddReservationServlet extends HttpServlet {
     if (session == null) {
       return false;
     }
-    Object userObj = session.getAttribute("user");
+    Object userObj = session.getAttribute("authUser");
     if (!(userObj instanceof User)) {
       return false;
     }

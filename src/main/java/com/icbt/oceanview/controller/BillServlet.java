@@ -24,7 +24,7 @@ public class BillServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     HttpSession session = request.getSession(false);
-    Object userObj = session == null ? null : session.getAttribute("user");
+    Object userObj = session == null ? null : session.getAttribute("authUser");
     if (!(userObj instanceof User)) {
       response.sendRedirect(request.getContextPath() + "/login");
       return;

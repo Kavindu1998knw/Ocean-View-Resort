@@ -1,6 +1,7 @@
 package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.ReservationDAO;
+import com.icbt.oceanview.model.User;
 import java.io.IOException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -15,7 +16,7 @@ public class DeleteReservationServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
 
@@ -40,7 +41,15 @@ public class DeleteReservationServlet extends HttpServlet {
 
   private boolean isAdmin(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
-    Object role = session == null ? null : session.getAttribute("role");
-    return role != null && "ADMIN".equalsIgnoreCase(String.valueOf(role));
+    if (session == null) {
+      return false;
+    }
+    Object userObj = session.getAttribute("authUser");
+    if (!(userObj instanceof User)) {
+      return false;
+    }
+    User user = (User) userObj;
+    String role = user.getRole();
+    return role != null && "ADMIN".equalsIgnoreCase(role);
   }
 }

@@ -21,11 +21,17 @@ public class AdminDashboardServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     HttpSession session = request.getSession(false);
-    Object userObj = session == null ? null : session.getAttribute("user");
+    Object userObj = session == null ? null : session.getAttribute("authUser");
     if (!(userObj instanceof User)) {
       response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
+    User sessionUser = (User) userObj;
+    String sessionName =
+        session.getAttribute("authName") != null
+            ? String.valueOf(session.getAttribute("authName"))
+            : sessionUser.getName();
+    request.setAttribute("loggedUserName", sessionName);
 
     ReservationDAO reservationDAO = new ReservationDAO();
     RoomManagementDAO roomDAO = new RoomManagementDAO();
