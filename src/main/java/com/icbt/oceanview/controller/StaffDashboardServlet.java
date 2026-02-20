@@ -1,5 +1,6 @@
 package com.icbt.oceanview.controller;
 
+import com.icbt.oceanview.model.User;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -15,18 +16,19 @@ public class StaffDashboardServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     HttpSession session = request.getSession(false);
-    if (session == null || session.getAttribute("role") == null) {
+    Object userObj = session == null ? null : session.getAttribute("user");
+    if (!(userObj instanceof User)) {
       response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
 
-    String role = String.valueOf(session.getAttribute("role"));
-    if (!"STAFF".equalsIgnoreCase(role)) {
+    User user = (User) userObj;
+    String role = user.getRole();
+    if (role == null || !"STAFF".equalsIgnoreCase(role)) {
       response.sendRedirect(request.getContextPath() + "/admin/dashboard");
       return;
     }
 
-    request.setAttribute("loggedUserName", session.getAttribute("loggedUserName"));
     request.getRequestDispatcher("/WEB-INF/views/staff-dashboard.jsp").forward(request, response);
   }
 }

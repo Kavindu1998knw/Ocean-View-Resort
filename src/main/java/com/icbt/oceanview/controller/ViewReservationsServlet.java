@@ -2,6 +2,7 @@ package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.ReservationDAO;
 import com.icbt.oceanview.model.Reservation;
+import com.icbt.oceanview.model.User;
 import java.io.IOException;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -18,12 +19,12 @@ public class ViewReservationsServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
 
     ReservationDAO reservationDAO = new ReservationDAO();
-    List<Reservation> reservations = reservationDAO.findAll();
+    List<Reservation> reservations = reservationDAO.findAllWithRoomNo();
     String success = request.getParameter("success");
     String error = request.getParameter("error");
     if (success != null && !success.trim().isEmpty()) {
@@ -38,7 +39,15 @@ public class ViewReservationsServlet extends HttpServlet {
 
   private boolean isAdmin(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
-    Object role = session == null ? null : session.getAttribute("role");
-    return role != null && "ADMIN".equalsIgnoreCase(String.valueOf(role));
+    if (session == null) {
+      return false;
+    }
+    Object userObj = session.getAttribute("user");
+    if (!(userObj instanceof User)) {
+      return false;
+    }
+    User user = (User) userObj;
+    String role = user.getRole();
+    return role != null && "ADMIN".equalsIgnoreCase(role);
   }
 }

@@ -26,7 +26,6 @@ public class AdminDashboardServlet extends HttpServlet {
       response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
-    request.setAttribute("loggedUserName", session.getAttribute("loggedUserName"));
 
     ReservationDAO reservationDAO = new ReservationDAO();
     RoomManagementDAO roomDAO = new RoomManagementDAO();

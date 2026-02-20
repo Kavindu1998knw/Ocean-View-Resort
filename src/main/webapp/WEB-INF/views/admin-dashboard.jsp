@@ -22,7 +22,7 @@
     <main class="admin-content">
         <div class="content-inner">
         <div class="hero mb-4">
-            <h1>Welcome back, ${loggedUserName}.</h1>
+            <h1>Welcome back, ${sessionScope.user.name}.</h1>
             <p>Here is a quick overview of Ocean View Resort operations today.</p>
         </div>
 

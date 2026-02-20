@@ -1,7 +1,11 @@
 package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.ReservationDAO;
+import com.icbt.oceanview.dao.RoomManagementDAO;
 import com.icbt.oceanview.model.Reservation;
+import com.icbt.oceanview.model.User;
+import com.icbt.oceanview.model.RoomInfo;
+import com.icbt.oceanview.util.RoomTypes;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +27,7 @@ public class UpdateReservationServlet extends HttpServlet {
       throws ServletException, IOException {
     request.setCharacterEncoding("UTF-8");
     if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
 
@@ -45,6 +49,7 @@ public class UpdateReservationServlet extends HttpServlet {
     String guestEmail = trimParam(request, "guestEmail");
     String contactNumber = trimParam(request, "contactNumber");
     String roomType = trimParam(request, "roomType");
+    String roomIdRaw = trimParam(request, "roomId");
     String numberOfGuestsRaw = trimParam(request, "numberOfGuests");
     String checkInDateRaw = trimParam(request, "checkInDate");
     String checkOutDateRaw = trimParam(request, "checkOutDate");
@@ -55,6 +60,7 @@ public class UpdateReservationServlet extends HttpServlet {
         || isBlank(guestEmail)
         || isBlank(contactNumber)
         || isBlank(roomType)
+        || isBlank(roomIdRaw)
         || isBlank(numberOfGuestsRaw)
         || isBlank(checkInDateRaw)
         || isBlank(checkOutDateRaw)
@@ -72,6 +78,18 @@ public class UpdateReservationServlet extends HttpServlet {
     }
     if (numberOfGuests < 1) {
       redirectWithError(response, request, "Number of guests must be at least 1.");
+      return;
+    }
+
+    int roomId;
+    try {
+      roomId = Integer.parseInt(roomIdRaw);
+    } catch (NumberFormatException e) {
+      redirectWithError(response, request, "Please select a valid room.");
+      return;
+    }
+    if (roomId <= 0) {
+      redirectWithError(response, request, "Please select a valid room.");
       return;
     }
 
@@ -104,26 +122,57 @@ public class UpdateReservationServlet extends HttpServlet {
     reservation.setGuestEmail(guestEmail);
     reservation.setContactNumber(contactNumber);
     reservation.setRoomType(roomType);
+    reservation.setRoomId(roomId);
     reservation.setNumberOfGuests(numberOfGuests);
     reservation.setCheckInDate(checkInDate);
     reservation.setCheckOutDate(checkOutDate);
     reservation.setSpecialRequests(specialRequests);
     reservation.setStatus(normalizedStatus);
 
+    RoomManagementDAO roomDAO = new RoomManagementDAO();
+    RoomInfo selectedRoom = roomDAO.findById(roomId);
+    if (selectedRoom == null
+        || !selectedRoom.isActive()
+        || !roomType.equals(selectedRoom.getRoomType())) {
+      redirectWithError(response, request, "Please select a valid room.");
+      return;
+    }
+
     ReservationDAO reservationDAO = new ReservationDAO();
+    if (reservationDAO.hasOverlappingReservationForRoomExcludingId(
+        id, roomId, checkInDate, checkOutDate)) {
+      forwardWithError(
+          request,
+          response,
+          reservation,
+          "This room is already reserved for the selected dates.");
+      return;
+    }
     boolean updated = reservationDAO.update(reservation);
     if (updated) {
       response.sendRedirect(
           request.getContextPath()
               + "/admin/reservations?success=Reservation+updated+successfully.");
     } else {
-      redirectWithError(response, request, "Failed to update reservation. Please try again.");
+      forwardWithError(request, response, reservation, "Failed to update reservation. Please try again.");
     }
   }
 
   private void redirectWithError(HttpServletResponse response, HttpServletRequest request, String message)
       throws IOException {
     response.sendRedirect(request.getContextPath() + "/admin/reservations?error=" + encode(message));
+  }
+
+  private void forwardWithError(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      Reservation reservation,
+      String message)
+      throws ServletException, IOException {
+    request.setAttribute("error", message);
+    request.setAttribute("reservation", reservation);
+    request.setAttribute("roomTypes", RoomTypes.ROOM_TYPES);
+    request.getRequestDispatcher("/WEB-INF/views/edit-reservation.jsp").forward(request, response);
   }
 
   private String encode(String value) {
@@ -139,9 +188,18 @@ public class UpdateReservationServlet extends HttpServlet {
 
   private boolean isAdmin(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
-    Object role = session == null ? null : session.getAttribute("role");
-    return role != null && "ADMIN".equalsIgnoreCase(String.valueOf(role));
+    if (session == null) {
+      return false;
+    }
+    Object userObj = session.getAttribute("user");
+    if (!(userObj instanceof User)) {
+      return false;
+    }
+    User user = (User) userObj;
+    String role = user.getRole();
+    return role != null && "ADMIN".equalsIgnoreCase(role);
   }
+
 
   private String trimParam(HttpServletRequest request, String name) {
     String value = request.getParameter(name);

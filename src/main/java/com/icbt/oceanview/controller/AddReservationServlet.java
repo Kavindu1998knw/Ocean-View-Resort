@@ -1,7 +1,10 @@
 package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.ReservationDAO;
+import com.icbt.oceanview.dao.RoomManagementDAO;
 import com.icbt.oceanview.model.Reservation;
+import com.icbt.oceanview.model.RoomInfo;
+import com.icbt.oceanview.model.User;
 import com.icbt.oceanview.util.RoomTypes;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -25,7 +28,7 @@ public class AddReservationServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
     setRoomTypes(request);
@@ -37,7 +40,7 @@ public class AddReservationServlet extends HttpServlet {
       throws ServletException, IOException {
     request.setCharacterEncoding("UTF-8");
     if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login.jsp");
+      response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
 
@@ -45,6 +48,7 @@ public class AddReservationServlet extends HttpServlet {
     String guestEmail = trimParam(request, "guestEmail");
     String contactNumber = trimParam(request, "contactNumber");
     String roomType = trimParam(request, "roomType");
+    String roomIdRaw = trimParam(request, "roomId");
     String numberOfGuestsRaw = trimParam(request, "numberOfGuests");
     String checkInDateRaw = trimParam(request, "checkInDate");
     String checkOutDateRaw = trimParam(request, "checkOutDate");
@@ -60,6 +64,7 @@ public class AddReservationServlet extends HttpServlet {
         guestEmail,
         contactNumber,
         roomType,
+        roomIdRaw,
         numberOfGuestsRaw,
         checkInDateRaw,
         checkOutDateRaw,
@@ -70,6 +75,7 @@ public class AddReservationServlet extends HttpServlet {
         || isBlank(guestEmail)
         || isBlank(contactNumber)
         || isBlank(roomType)
+        || isBlank(roomIdRaw)
         || isBlank(numberOfGuestsRaw)
         || isBlank(checkInDateRaw)
         || isBlank(checkOutDateRaw)) {
@@ -91,6 +97,18 @@ public class AddReservationServlet extends HttpServlet {
     }
     if (numberOfGuests < 1) {
       forwardWithError(request, response, "Number of guests must be at least 1.");
+      return;
+    }
+
+    int roomId;
+    try {
+      roomId = Integer.parseInt(roomIdRaw);
+    } catch (NumberFormatException e) {
+      forwardWithError(request, response, "Please select a valid room.");
+      return;
+    }
+    if (roomId <= 0) {
+      forwardWithError(request, response, "Please select a valid room.");
       return;
     }
 
@@ -120,7 +138,23 @@ public class AddReservationServlet extends HttpServlet {
       status = normalizedStatus;
     }
 
+    RoomManagementDAO roomDAO = new RoomManagementDAO();
+    RoomInfo selectedRoom = roomDAO.findById(roomId);
+    if (selectedRoom == null
+        || !selectedRoom.isActive()
+        || !roomType.equals(selectedRoom.getRoomType())) {
+      forwardWithError(request, response, "Please select a valid room.");
+      return;
+    }
+
     ReservationDAO reservationDAO = new ReservationDAO();
+    if (reservationDAO.hasOverlappingReservationForRoom(roomId, checkInDate, checkOutDate)) {
+      forwardWithError(
+          request,
+          response,
+          "This room is already reserved for the selected dates.");
+      return;
+    }
     String reservationNo = reservationDAO.generateReservationNo();
     if (reservationNo == null) {
       forwardWithError(request, response, "Unable to generate reservation number. Please try again.");
@@ -134,6 +168,7 @@ public class AddReservationServlet extends HttpServlet {
             guestEmail,
             contactNumber,
             roomType,
+            roomId,
             numberOfGuests,
             checkInDate,
             checkOutDate,
@@ -155,8 +190,16 @@ public class AddReservationServlet extends HttpServlet {
 
   private boolean isAdmin(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
-    Object role = session == null ? null : session.getAttribute("role");
-    return role != null && "ADMIN".equalsIgnoreCase(String.valueOf(role));
+    if (session == null) {
+      return false;
+    }
+    Object userObj = session.getAttribute("user");
+    if (!(userObj instanceof User)) {
+      return false;
+    }
+    User user = (User) userObj;
+    String role = user.getRole();
+    return role != null && "ADMIN".equalsIgnoreCase(role);
   }
 
   private void preserveFormValues(
@@ -165,6 +208,7 @@ public class AddReservationServlet extends HttpServlet {
       String guestEmail,
       String contactNumber,
       String roomType,
+      String roomId,
       String numberOfGuests,
       String checkInDate,
       String checkOutDate,
@@ -174,6 +218,7 @@ public class AddReservationServlet extends HttpServlet {
     request.setAttribute("guestEmail", guestEmail);
     request.setAttribute("contactNumber", contactNumber);
     request.setAttribute("roomType", roomType);
+    request.setAttribute("roomId", roomId);
     request.setAttribute("numberOfGuests", numberOfGuests);
     request.setAttribute("checkInDate", checkInDate);
     request.setAttribute("checkOutDate", checkOutDate);
