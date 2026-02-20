@@ -39,7 +39,6 @@
                     <div class="card-body">
                         <div class="stat-label">Total Reservations</div>
                         <div class="stat-value">${totalReservations}</div>
-                        <div class="stat-foot">+12 this week</div>
                     </div>
                 </div>
             </div>
@@ -48,7 +47,6 @@
                     <div class="card-body">
                         <div class="stat-label">Total Guests</div>
                         <div class="stat-value">${totalGuests}</div>
-                        <div class="stat-foot">Occupancy 78%</div>
                     </div>
                 </div>
             </div>
@@ -57,7 +55,6 @@
                     <div class="card-body">
                         <div class="stat-label">Available Rooms</div>
                         <div class="stat-value">${empty availableRooms ? 0 : availableRooms}</div>
-                        <div class="stat-foot">Suite + Deluxe</div>
                     </div>
                 </div>
             </div>
@@ -66,7 +63,6 @@
                     <div class="card-body">
                         <div class="stat-label">Today's Check-ins</div>
                         <div class="stat-value">${todayCheckIns}</div>
-                        <div class="stat-foot">Next arrival 2:30 PM</div>
                     </div>
                 </div>
             </div>
