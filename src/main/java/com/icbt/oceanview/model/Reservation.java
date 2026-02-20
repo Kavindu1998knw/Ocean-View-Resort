@@ -10,6 +10,8 @@ public class Reservation {
   private String guestEmail;
   private String contactNumber;
   private String roomType;
+  private Integer roomId;
+  private String roomNo;
   private int numberOfGuests;
   private LocalDate checkInDate;
   private LocalDate checkOutDate;
@@ -25,6 +27,7 @@ public class Reservation {
       String guestEmail,
       String contactNumber,
       String roomType,
+      Integer roomId,
       int numberOfGuests,
       LocalDate checkInDate,
       LocalDate checkOutDate,
@@ -36,6 +39,7 @@ public class Reservation {
     this.guestEmail = guestEmail;
     this.contactNumber = contactNumber;
     this.roomType = roomType;
+    this.roomId = roomId;
     this.numberOfGuests = numberOfGuests;
     this.checkInDate = checkInDate;
     this.checkOutDate = checkOutDate;
@@ -51,6 +55,7 @@ public class Reservation {
       String guestEmail,
       String contactNumber,
       String roomType,
+      Integer roomId,
       int numberOfGuests,
       LocalDate checkInDate,
       LocalDate checkOutDate,
@@ -63,6 +68,7 @@ public class Reservation {
     this.guestEmail = guestEmail;
     this.contactNumber = contactNumber;
     this.roomType = roomType;
+    this.roomId = roomId;
     this.numberOfGuests = numberOfGuests;
     this.checkInDate = checkInDate;
     this.checkOutDate = checkOutDate;
@@ -77,6 +83,7 @@ public class Reservation {
       String guestEmail,
       String contactNumber,
       String roomType,
+      Integer roomId,
       int numberOfGuests,
       LocalDate checkInDate,
       LocalDate checkOutDate,
@@ -92,12 +99,40 @@ public class Reservation {
         guestEmail,
         contactNumber,
         roomType,
+        roomId,
         numberOfGuests,
         checkInDate,
         checkOutDate,
         specialRequests,
         effectiveStatus,
         effectiveCreatedAt);
+  }
+
+  public static Reservation newForCreate(
+      String reservationNo,
+      String guestFullName,
+      String guestEmail,
+      String contactNumber,
+      String roomType,
+      int numberOfGuests,
+      LocalDate checkInDate,
+      LocalDate checkOutDate,
+      String specialRequests,
+      String status,
+      LocalDateTime createdAt) {
+    return newForCreate(
+        reservationNo,
+        guestFullName,
+        guestEmail,
+        contactNumber,
+        roomType,
+        null,
+        numberOfGuests,
+        checkInDate,
+        checkOutDate,
+        specialRequests,
+        status,
+        createdAt);
   }
 
   public int getId() {
@@ -146,6 +181,22 @@ public class Reservation {
 
   public void setRoomType(String roomType) {
     this.roomType = roomType;
+  }
+
+  public Integer getRoomId() {
+    return roomId;
+  }
+
+  public void setRoomId(Integer roomId) {
+    this.roomId = roomId;
+  }
+
+  public String getRoomNo() {
+    return roomNo;
+  }
+
+  public void setRoomNo(String roomNo) {
+    this.roomNo = roomNo;
   }
 
   public int getNumberOfGuests() {
@@ -215,6 +266,11 @@ public class Reservation {
         + '\''
         + ", roomType='"
         + roomType
+        + '\''
+        + ", roomId="
+        + roomId
+        + ", roomNo='"
+        + roomNo
         + '\''
         + ", numberOfGuests="
         + numberOfGuests

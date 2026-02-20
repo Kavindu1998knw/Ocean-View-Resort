@@ -13,11 +13,19 @@
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
         crossorigin="anonymous"
     >
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css" />
 </head>
-<body class="bg-light">
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Edit Reservation</h1>
+<body class="admin-body">
+<%@ include file="/WEB-INF/views/admin/partials/header.jsp" %>
+<div class="admin-shell">
+    <%@ include file="/WEB-INF/views/admin/partials/_sidebar.jsp" %>
+    <main class="admin-content">
+        <div class="content-inner">
+    <div class="page-header">
+        <div>
+            <h1 class="h3">Edit Reservation</h1>
+            <p>Update reservation details and status.</p>
+        </div>
         <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/admin/reservations">Back to Reservations</a>
     </div>
 
@@ -25,8 +33,8 @@
         <div class="alert alert-danger" role="alert">${error}</div>
     </c:if>
 
-    <form method="post" action="${pageContext.request.contextPath}/admin/reservation/update" class="card shadow-sm">
-        <div class="card-body">
+    <form method="post" action="${pageContext.request.contextPath}/admin/reservation/update" class="card card-soft">
+        <div class="card-body p-4">
             <input type="hidden" name="id" value="${reservation.id}">
 
             <div class="row g-3">
@@ -81,6 +89,13 @@
                             <option value="${type}" ${type == reservation.roomType ? 'selected' : ''}>${type}</option>
                         </c:forEach>
                     </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="roomId" class="form-label">Room (Room No)</label>
+                    <select class="form-select" id="roomId" name="roomId" required>
+                        <option value="" selected disabled>Select room</option>
+                    </select>
+                    <div id="roomIdHelp" class="form-text text-muted d-none">No active rooms available for this room type.</div>
                 </div>
                 <div class="col-md-4">
                     <label for="numberOfGuests" class="form-label">Number of Guests</label>
@@ -140,6 +155,90 @@
             <button type="submit" class="btn btn-primary">Update Reservation</button>
         </div>
     </form>
+        </div>
+    </main>
 </div>
+<script>
+    (function () {
+        const contextPath = "${pageContext.request.contextPath}";
+        const roomTypeEl = document.getElementById("roomType");
+        const roomIdEl = document.getElementById("roomId");
+        const roomIdHelpEl = document.getElementById("roomIdHelp");
+        let initialRoomId = "${reservation.roomId}";
+
+        function setRoomSelectState(enabled, message) {
+            roomIdEl.disabled = !enabled;
+            if (message) {
+                roomIdHelpEl.textContent = message;
+                roomIdHelpEl.classList.remove("d-none");
+            } else {
+                roomIdHelpEl.textContent = "";
+                roomIdHelpEl.classList.add("d-none");
+            }
+        }
+
+        function resetRoomOptions() {
+            roomIdEl.innerHTML = "";
+            const option = document.createElement("option");
+            option.value = "";
+            option.textContent = "Select room";
+            option.disabled = true;
+            option.selected = true;
+            roomIdEl.appendChild(option);
+        }
+
+        async function fetchRooms() {
+            const roomType = roomTypeEl.value;
+            resetRoomOptions();
+            setRoomSelectState(false, "");
+
+            if (!roomType) {
+                return;
+            }
+
+            try {
+                const url = contextPath + "/admin/api/rooms?roomType=" + encodeURIComponent(roomType);
+                const response = await fetch(url, {headers: {"Accept": "application/json"}});
+                if (!response.ok) {
+                    setRoomSelectState(false, "No active rooms available for this room type.");
+                    return;
+                }
+
+                const data = await response.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    setRoomSelectState(false, "No active rooms available for this room type.");
+                    return;
+                }
+
+                data.forEach((room) => {
+                    if (!room || !room.id || !room.roomNo) {
+                        return;
+                    }
+                    const option = document.createElement("option");
+                    option.value = room.id;
+                    option.textContent = room.roomNo;
+                    roomIdEl.appendChild(option);
+                });
+
+                setRoomSelectState(true, "");
+                if (initialRoomId) {
+                    roomIdEl.value = initialRoomId;
+                    initialRoomId = "";
+                }
+            } catch (e) {
+                setRoomSelectState(false, "No active rooms available for this room type.");
+            }
+        }
+
+        roomTypeEl.addEventListener("change", fetchRooms);
+
+        if (roomTypeEl.value) {
+            fetchRooms();
+        } else {
+            resetRoomOptions();
+            setRoomSelectState(false, "");
+        }
+    })();
+</script>
 </body>
 </html>
