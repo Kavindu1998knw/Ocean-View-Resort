@@ -18,7 +18,7 @@ public class ViewReservationsServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    if (!isAdmin(request)) {
+    if (!isStaffOrAdmin(request)) {
       response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
@@ -37,7 +37,7 @@ public class ViewReservationsServlet extends HttpServlet {
     request.getRequestDispatcher("/WEB-INF/views/view-reservations.jsp").forward(request, response);
   }
 
-  private boolean isAdmin(HttpServletRequest request) {
+  private boolean isStaffOrAdmin(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
     if (session == null) {
       return false;
@@ -48,6 +48,6 @@ public class ViewReservationsServlet extends HttpServlet {
     }
     User user = (User) userObj;
     String role = user.getRole();
-    return role != null && "ADMIN".equalsIgnoreCase(role);
+    return role != null && ("ADMIN".equalsIgnoreCase(role) || "STAFF".equalsIgnoreCase(role));
   }
 }

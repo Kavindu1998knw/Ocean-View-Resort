@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="false" isELIgnored="false" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,34 +9,130 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css" />
 </head>
 <body class="admin-body">
-<nav class="ov-navbar">
-    <div class="ov-brand">
-        <img class="ov-logo" src="${pageContext.request.contextPath}/assets/images/logo.png" alt="Ocean View Resort"/>
-        <div class="ov-brand-text">
-            <div class="ov-title">Ocean View Resort</div>
-            <div class="ov-subtitle">Staff Dashboard</div>
-        </div>
-    </div>
-
-    <div class="user-info">
-        <span>
-            Logged in as
-            <strong>${sessionScope.authName}</strong>
-        </span>
-        <a href="${pageContext.request.contextPath}/logout"
-           class="logout-btn"
-           onclick="return confirm('Are you sure you want to logout?');">
-            Logout
-        </a>
-    </div>
-</nav>
-
+<%@ include file="/WEB-INF/views/admin/partials/header.jsp" %>
 <div class="admin-shell">
+    <aside class="admin-sidebar">
+        <div class="sidebar-inner">
+            <div class="sidebar-title">Staff Menu</div>
+            <nav class="nav flex-column sidebar-nav">
+                <a class="nav-link" href="${pageContext.request.contextPath}/staff/dashboard">
+                    <span class="dot"></span>Dashboard
+                </a>
+                <a class="nav-link" href="${pageContext.request.contextPath}/admin/reservations">
+                    <span class="dot"></span>View Reservations
+                </a>
+                <a class="nav-link" href="${pageContext.request.contextPath}/admin/reservations/search">
+                    <span class="dot"></span>Search Reservation
+                </a>
+                <a class="nav-link" href="${pageContext.request.contextPath}/logout" onclick="return confirm('Are you sure you want to logout?');">
+                    <span class="dot"></span>Exit / Logout
+                </a>
+            </nav>
+        </div>
+    </aside>
     <main class="admin-content">
         <div class="content-inner">
             <div class="hero mb-4">
-                <h1>Staff Dashboard</h1>
-                <p>Welcome to your workspace.</p>
+                <h1>Welcome back, ${sessionScope.authName}.</h1>
+                <p>Here is a quick overview of your reservations and tasks today.</p>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card card-soft stat-card">
+                        <div class="card-body">
+                            <div class="stat-label">My Reservations</div>
+                            <div class="stat-value">${totalReservations}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card card-soft stat-card">
+                        <div class="card-body">
+                            <div class="stat-label">Upcoming Check-ins</div>
+                            <div class="stat-value">${upcomingCheckIns}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card card-soft stat-card">
+                        <div class="card-body">
+                            <div class="stat-label">Upcoming Check-outs</div>
+                            <div class="stat-value">${upcomingCheckOuts}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card card-soft stat-card">
+                        <div class="card-body">
+                            <div class="stat-label">Rooms Available</div>
+                            <div class="stat-value">${empty availableRooms ? 0 : availableRooms}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12 col-xl-8">
+                    <div class="card card-soft">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">Recent Reservations</h5>
+                                <a class="btn btn-sm btn-outline-primary" href="${pageContext.request.contextPath}/admin/reservations">View all</a>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover table-clean align-middle mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th>Reservation No</th>
+                                        <th>Room Type</th>
+                                        <th>Room No</th>
+                                        <th>Check In</th>
+                                        <th>Check Out</th>
+                                        <th>Status</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <c:choose>
+                                        <c:when test="${empty recentReservations}">
+                                            <tr>
+                                                <td colspan="6" class="text-muted text-center py-4">
+                                                    No recent reservations found.
+                                                </td>
+                                            </tr>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <c:forEach var="r" items="${recentReservations}">
+                                                <tr>
+                                                    <td><c:out value="${r.reservationNo}"/></td>
+                                                    <td><c:out value="${r.roomType}"/></td>
+                                                    <td><c:out value="${empty r.roomNo ? '-' : r.roomNo}"/></td>
+                                                    <td><c:out value="${r.checkInDate}"/></td>
+                                                    <td><c:out value="${r.checkOutDate}"/></td>
+                                                    <td><c:out value="${r.status}"/></td>
+                                                </tr>
+                                            </c:forEach>
+                                        </c:otherwise>
+                                    </c:choose>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-4">
+                    <div class="card card-soft">
+                        <div class="card-body">
+                            <h5 class="mb-3">Quick Actions</h5>
+                            <div class="d-grid gap-2">
+                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/reservations/search">Search Reservation</a>
+                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/reservations">View Reservations</a>
+                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/bill">Print Bill</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>

@@ -40,6 +40,12 @@ public class ReservationDAO {
       "SELECT COUNT(*) FROM reservations WHERE check_in_date = CURDATE()";
   private static final String COUNT_TOTAL_GUESTS_SQL =
       "SELECT COALESCE(SUM(number_of_guests), 0) FROM reservations";
+  private static final String COUNT_UPCOMING_CHECKINS_SQL =
+      "SELECT COUNT(*) FROM reservations "
+          + "WHERE status IN ('PENDING','CONFIRMED','CHECKED_IN') AND check_in_date >= ?";
+  private static final String COUNT_UPCOMING_CHECKOUTS_SQL =
+      "SELECT COUNT(*) FROM reservations "
+          + "WHERE status IN ('PENDING','CONFIRMED','CHECKED_IN') AND check_out_date >= ?";
   private static final String FIND_RECENT_SQL =
       "SELECT * FROM reservations ORDER BY created_at DESC LIMIT ?";
   private static final String FIND_RECENT_WITH_ROOM_NO_SQL =
@@ -227,6 +233,32 @@ public class ReservationDAO {
         PreparedStatement statement = connection.prepareStatement(COUNT_TOTAL_GUESTS_SQL);
         ResultSet resultSet = statement.executeQuery()) {
       return resultSet.next() ? resultSet.getInt(1) : 0;
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return 0;
+    }
+  }
+
+  public int countUpcomingCheckIns(LocalDate fromDate) {
+    try (Connection connection = DBUtil.getConnection();
+        PreparedStatement statement = connection.prepareStatement(COUNT_UPCOMING_CHECKINS_SQL)) {
+      statement.setDate(1, Date.valueOf(fromDate));
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() ? resultSet.getInt(1) : 0;
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return 0;
+    }
+  }
+
+  public int countUpcomingCheckOuts(LocalDate fromDate) {
+    try (Connection connection = DBUtil.getConnection();
+        PreparedStatement statement = connection.prepareStatement(COUNT_UPCOMING_CHECKOUTS_SQL)) {
+      statement.setDate(1, Date.valueOf(fromDate));
+      try (ResultSet resultSet = statement.executeQuery()) {
+        return resultSet.next() ? resultSet.getInt(1) : 0;
+      }
     } catch (SQLException e) {
       e.printStackTrace();
       return 0;

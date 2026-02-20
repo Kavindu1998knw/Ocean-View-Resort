@@ -1,12 +1,17 @@
 package com.icbt.oceanview.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import com.icbt.oceanview.dao.ReservationDAO;
+import com.icbt.oceanview.dao.RoomManagementDAO;
+import com.icbt.oceanview.model.Reservation;
 
 @WebServlet("/staff/dashboard")
 public class StaffDashboardServlet extends HttpServlet {
@@ -35,6 +40,24 @@ public class StaffDashboardServlet extends HttpServlet {
       response.sendRedirect(request.getContextPath() + "/login");
       return;
     }
+
+    String authName = String.valueOf(session.getAttribute("authName"));
+    request.setAttribute("loggedUserName", authName);
+
+    ReservationDAO reservationDAO = new ReservationDAO();
+    RoomManagementDAO roomDAO = new RoomManagementDAO();
+    LocalDate today = LocalDate.now();
+    int totalReservations = reservationDAO.countAllReservations();
+    int upcomingCheckIns = reservationDAO.countUpcomingCheckIns(today);
+    int upcomingCheckOuts = reservationDAO.countUpcomingCheckOuts(today);
+    int availableRooms = roomDAO.countAvailableRooms(today);
+    List<Reservation> recentReservations = reservationDAO.findRecentReservationsWithRoomNo(5);
+
+    request.setAttribute("totalReservations", totalReservations);
+    request.setAttribute("upcomingCheckIns", upcomingCheckIns);
+    request.setAttribute("upcomingCheckOuts", upcomingCheckOuts);
+    request.setAttribute("availableRooms", availableRooms);
+    request.setAttribute("recentReservations", recentReservations);
 
     request.getRequestDispatcher("/WEB-INF/views/staff-dashboard.jsp").forward(request, response);
   }
