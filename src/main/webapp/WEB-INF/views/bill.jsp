@@ -16,76 +16,22 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css" />
     <style>
         @media print {
-            @page {
-                margin: 12mm;
-                size: A4;
-            }
-
             body {
-                background: #ffffff !important;
-                color: #000 !important;
+                background: #fff !important;
             }
 
-            body * {
-                visibility: hidden !important;
-            }
-
-            #printArea,
-            #printArea * {
-                visibility: visible !important;
-            }
-
-            #printArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                max-width: 100%;
-                padding: 0;
-                margin: 0;
-                background: transparent !important;
-            }
-
-            .no-print,
-            .ov-navbar,
-            .admin-sidebar,
-            .admin-shell,
-            .admin-content,
-            .content-inner,
-            .page-header,
-            #billForm,
-            .card,
-            .table-responsive,
-            .alert,
-            .actions,
-            .action-buttons {
+            .no-print {
                 display: none !important;
             }
 
-            #printArea .print-card {
-                box-shadow: none !important;
-                border: 1px solid #e5e7eb !important;
-                padding: 18px !important;
-                background: #ffffff !important;
-            }
-
-            #printArea h1,
-            #printArea h2 {
-                color: #000 !important;
-            }
-
-            #printArea table,
-            #printArea .print-section {
-                page-break-inside: avoid;
-            }
-
-            .print-only {
+            #printArea {
                 display: block !important;
+                width: 100% !important;
             }
-        }
 
-        .print-only {
-            display: none;
+            body * {
+                visibility: visible !important;
+            }
         }
 
         #printArea .print-card {
@@ -145,12 +91,16 @@
     </style>
 </head>
 <body class="admin-body">
-<%@ include file="/WEB-INF/views/admin/partials/header.jsp" %>
+<div class="no-print">
+    <%@ include file="/WEB-INF/views/admin/partials/header.jsp" %>
+</div>
 <div class="admin-shell">
-    <%@ include file="/WEB-INF/views/admin/partials/_sidebar.jsp" %>
+    <div class="no-print">
+        <%@ include file="/WEB-INF/views/admin/partials/_sidebar.jsp" %>
+    </div>
     <main class="admin-content">
         <div class="content-inner">
-    <div class="page-header">
+    <div class="page-header no-print">
         <div>
             <h1 class="h3">Calculate &amp; Print Bill</h1>
             <p>Generate a bill summary for a reservation.</p>
@@ -242,7 +192,7 @@
     </div>
 
     <c:if test="${not empty reservation}">
-        <div id="printArea" class="print-section">
+        <div id="printArea">
             <div class="print-card">
                 <div class="print-header">
                     <div>
@@ -323,7 +273,7 @@
         </div>
 
         <div class="d-flex justify-content-end mt-3 no-print">
-            <button type="button" class="btn btn-success" onclick="window.print()">Print Bill</button>
+            <button type="button" class="btn btn-success no-print" onclick="window.print()">Print Bill</button>
         </div>
     </c:if>
         </div>
