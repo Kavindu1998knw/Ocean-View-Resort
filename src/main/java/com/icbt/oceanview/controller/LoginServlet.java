@@ -3,11 +3,6 @@ package com.icbt.oceanview.controller;
 import com.icbt.oceanview.dao.UserDAO;
 import com.icbt.oceanview.model.User;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
-import java.util.Base64;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -20,6 +15,10 @@ public class LoginServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+    String errorParam = request.getParameter("error");
+    if (errorParam != null && !errorParam.trim().isEmpty()) {
+      request.setAttribute("error", errorParam);
+    }
     request.getRequestDispatcher("login.jsp").forward(request, response);
   }
 
@@ -38,45 +37,30 @@ public class LoginServlet extends HttpServlet {
     }
 
     UserDAO userDAO = new UserDAO();
-    User user = userDAO.findByEmail(email);
+    User user = userDAO.authenticate(email, password);
     if (user == null) {
       request.setAttribute("error", "Invalid email or password.");
       request.getRequestDispatcher("login.jsp").forward(request, response);
       return;
     }
 
-    if (!user.isActive()) {
-      request.setAttribute("error", "Your account is inactive. Please contact support.");
-      request.getRequestDispatcher("login.jsp").forward(request, response);
-      return;
-    }
-
-    String inputHash;
-    try {
-      inputHash = hashPassword(password);
-    } catch (SQLException e) {
-      request.setAttribute("error", "Login failed. Please try again.");
-      request.getRequestDispatcher("login.jsp").forward(request, response);
-      return;
-    }
-
-    if (!inputHash.equals(user.getPassword())) {
-      request.setAttribute("error", "Invalid email or password.");
-      request.getRequestDispatcher("login.jsp").forward(request, response);
-      return;
-    }
-
     HttpSession session = request.getSession(true);
-    session.setAttribute("loggedUser", user);
+    session.setAttribute("user", user);
+    session.setAttribute("loggedUserName", user.getName());
     session.setAttribute("role", user.getRole());
     session.setAttribute("userId", user.getId());
 
-    String role = user.getRole() == null ? "" : user.getRole();
+    String role = user.getRole() == null ? "" : user.getRole().trim();
     if ("ADMIN".equalsIgnoreCase(role)) {
       response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-    } else {
-      response.sendRedirect(request.getContextPath() + "/index.jsp");
+      return;
     }
+    if ("STAFF".equalsIgnoreCase(role)) {
+      response.sendRedirect(request.getContextPath() + "/staff/dashboard");
+      return;
+    }
+
+    response.sendRedirect(request.getContextPath() + "/login?error=Invalid+role");
   }
 
   private String trimParam(HttpServletRequest request, String name) {
@@ -86,15 +70,5 @@ public class LoginServlet extends HttpServlet {
 
   private boolean isBlank(String value) {
     return value == null || value.trim().isEmpty();
-  }
-
-  private String hashPassword(String password) throws SQLException {
-    try {
-      MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-      return Base64.getEncoder().encodeToString(hash);
-    } catch (NoSuchAlgorithmException e) {
-      throw new SQLException("Unable to hash password.", e);
-    }
   }
 }
