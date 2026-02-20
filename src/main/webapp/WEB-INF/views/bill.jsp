@@ -18,10 +18,32 @@
         @media print {
             @page {
                 margin: 12mm;
+                size: A4;
             }
 
             body {
                 background: #ffffff !important;
+                color: #000 !important;
+            }
+
+            body * {
+                visibility: hidden !important;
+            }
+
+            #printArea,
+            #printArea * {
+                visibility: visible !important;
+            }
+
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+                background: transparent !important;
             }
 
             .no-print,
@@ -40,32 +62,20 @@
                 display: none !important;
             }
 
-            #print-area {
-                display: block !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                box-shadow: none !important;
-                border: none !important;
-                background: transparent !important;
-            }
-
-            #print-area .print-card {
+            #printArea .print-card {
                 box-shadow: none !important;
                 border: 1px solid #e5e7eb !important;
+                padding: 18px !important;
+                background: #ffffff !important;
             }
 
-            #print-area h1,
-            #print-area h2 {
+            #printArea h1,
+            #printArea h2 {
                 color: #000 !important;
             }
 
-            #print-area table {
-                page-break-inside: avoid;
-            }
-
-            #print-area .print-section {
+            #printArea table,
+            #printArea .print-section {
                 page-break-inside: avoid;
             }
 
@@ -78,58 +88,58 @@
             display: none;
         }
 
-        #print-area .print-card {
+        #printArea .print-card {
             border-radius: 12px;
             border: 1px solid #e5e7eb;
             background: #ffffff;
             padding: 24px;
         }
 
-        #print-area .print-header {
+        #printArea .print-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 16px;
         }
 
-        #print-area .print-title {
-            font-size: 22px;
+        #printArea .print-title {
+            font-size: 20px;
             font-weight: 700;
             margin: 0;
         }
 
-        #print-area .print-meta {
+        #printArea .print-meta {
             font-size: 13px;
             color: #4b5563;
         }
 
-        #print-area .print-section-title {
-            font-size: 16px;
+        #printArea .print-section-title {
+            font-size: 15px;
             font-weight: 600;
             margin: 16px 0 8px;
         }
 
-        #print-area .print-table {
+        #printArea .print-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 13px;
         }
 
-        #print-area .print-table th,
-        #print-area .print-table td {
-            padding: 6px 0;
+        #printArea .print-table th,
+        #printArea .print-table td {
+            padding: 4px 0;
             vertical-align: top;
         }
 
-        #print-area .print-table th {
+        #printArea .print-table th {
             width: 45%;
             color: #374151;
             font-weight: 600;
         }
 
-        #print-area .print-footer {
-            margin-top: 16px;
-            font-size: 13px;
+        #printArea .print-footer {
+            margin-top: 12px;
+            font-size: 12px;
             color: #4b5563;
         }
     </style>
@@ -232,7 +242,7 @@
     </div>
 
     <c:if test="${not empty reservation}">
-        <div id="print-area" class="print-section">
+        <div id="printArea" class="print-section">
             <div class="print-card">
                 <div class="print-header">
                     <div>
