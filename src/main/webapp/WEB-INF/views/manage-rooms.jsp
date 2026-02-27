@@ -30,7 +30,7 @@
             <h1 class="h3">Manage Rooms</h1>
             <p>Add, edit, and manage room availability.</p>
         </div>
-        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/admin/dashboard">Back to Dashboard</a>
+        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
     </div>
 
     <c:if test="${not empty param.success}">
@@ -265,3 +265,4 @@
 </script>
 </body>
 </html>
+

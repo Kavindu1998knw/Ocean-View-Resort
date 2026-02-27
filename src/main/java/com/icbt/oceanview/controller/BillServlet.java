@@ -3,7 +3,6 @@ package com.icbt.oceanview.controller;
 import com.icbt.oceanview.dao.ReservationDAO;
 import com.icbt.oceanview.dao.RoomManagementDAO;
 import com.icbt.oceanview.model.Reservation;
-import com.icbt.oceanview.model.User;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -14,19 +13,15 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-@WebServlet("/admin/bill")
+@WebServlet("/bill")
 public class BillServlet extends HttpServlet {
   private static final BigDecimal SERVICE_CHARGE_RATE = new BigDecimal("0.10");
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    HttpSession session = request.getSession(false);
-    Object userObj = session == null ? null : session.getAttribute("authUser");
-    if (!(userObj instanceof User)) {
-      response.sendRedirect(request.getContextPath() + "/login");
+    String role = AuthHelper.requireRole(request, response, true, true);
+    if (role == null) {
       return;
     }
 
@@ -35,14 +30,14 @@ public class BillServlet extends HttpServlet {
 
     String reservationNo = request.getParameter("reservationNo");
     if (reservationNo == null || reservationNo.trim().isEmpty()) {
-      request.getRequestDispatcher("/WEB-INF/views/bill.jsp").forward(request, response);
+      request.getRequestDispatcher(resolveView(role)).forward(request, response);
       return;
     }
 
     Reservation reservation = reservationDAO.findByReservationNo(reservationNo.trim());
     if (reservation == null) {
       request.setAttribute("notFound", true);
-      request.getRequestDispatcher("/WEB-INF/views/bill.jsp").forward(request, response);
+      request.getRequestDispatcher(resolveView(role)).forward(request, response);
       return;
     }
 
@@ -50,7 +45,7 @@ public class BillServlet extends HttpServlet {
     LocalDate checkOutDate = reservation.getCheckOutDate();
     if (checkInDate == null || checkOutDate == null) {
       request.setAttribute("error", "Reservation dates are invalid for billing.");
-      request.getRequestDispatcher("/WEB-INF/views/bill.jsp").forward(request, response);
+      request.getRequestDispatcher(resolveView(role)).forward(request, response);
       return;
     }
 
@@ -61,7 +56,7 @@ public class BillServlet extends HttpServlet {
     BigDecimal rate = roomManagementDAO.findPriceByRoomType(reservation.getRoomType());
     if (rate == null) {
       request.setAttribute("error", "Room price not configured for this room type.");
-      request.getRequestDispatcher("/WEB-INF/views/bill.jsp").forward(request, response);
+      request.getRequestDispatcher(resolveView(role)).forward(request, response);
       return;
     }
 
@@ -76,6 +71,13 @@ public class BillServlet extends HttpServlet {
     request.setAttribute("subtotal", subtotal);
     request.setAttribute("serviceCharge", serviceCharge);
     request.setAttribute("total", total);
-    request.getRequestDispatcher("/WEB-INF/views/bill.jsp").forward(request, response);
+    request.getRequestDispatcher(resolveView(role)).forward(request, response);
+  }
+
+  private String resolveView(String role) {
+    if (AuthHelper.ROLE_ADMIN.equals(role)) {
+      return "/WEB-INF/views/bill.jsp";
+    }
+    return "/WEB-INF/views/staff-bill.jsp";
   }
 }

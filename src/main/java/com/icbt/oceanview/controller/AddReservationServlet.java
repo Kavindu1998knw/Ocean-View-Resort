@@ -4,7 +4,6 @@ import com.icbt.oceanview.dao.ReservationDAO;
 import com.icbt.oceanview.dao.RoomManagementDAO;
 import com.icbt.oceanview.model.Reservation;
 import com.icbt.oceanview.model.RoomInfo;
-import com.icbt.oceanview.model.User;
 import com.icbt.oceanview.util.RoomTypes;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -17,9 +16,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-@WebServlet("/admin/reservation")
+@WebServlet("/reservations/add")
 public class AddReservationServlet extends HttpServlet {
   private static final Pattern EMAIL_PATTERN =
       Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
@@ -27,20 +25,20 @@ public class AddReservationServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login");
+    String role = AuthHelper.requireRole(request, response, true, true);
+    if (role == null) {
       return;
     }
     setRoomTypes(request);
-    request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
+    request.getRequestDispatcher(resolveView(role)).forward(request, response);
   }
 
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     request.setCharacterEncoding("UTF-8");
-    if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login");
+    String role = AuthHelper.requireRole(request, response, true, true);
+    if (role == null) {
       return;
     }
 
@@ -79,12 +77,12 @@ public class AddReservationServlet extends HttpServlet {
         || isBlank(numberOfGuestsRaw)
         || isBlank(checkInDateRaw)
         || isBlank(checkOutDateRaw)) {
-      forwardWithError(request, response, "Please fill all required fields.");
+      forwardWithError(request, response, "Please fill all required fields.", role);
       return;
     }
 
     if (!EMAIL_PATTERN.matcher(guestEmail).matches()) {
-      forwardWithError(request, response, "Please enter a valid email address.");
+      forwardWithError(request, response, "Please enter a valid email address.", role);
       return;
     }
 
@@ -92,11 +90,11 @@ public class AddReservationServlet extends HttpServlet {
     try {
       numberOfGuests = Integer.parseInt(numberOfGuestsRaw);
     } catch (NumberFormatException e) {
-      forwardWithError(request, response, "Number of guests must be a valid number.");
+      forwardWithError(request, response, "Number of guests must be a valid number.", role);
       return;
     }
     if (numberOfGuests < 1) {
-      forwardWithError(request, response, "Number of guests must be at least 1.");
+      forwardWithError(request, response, "Number of guests must be at least 1.", role);
       return;
     }
 
@@ -104,11 +102,11 @@ public class AddReservationServlet extends HttpServlet {
     try {
       roomId = Integer.parseInt(roomIdRaw);
     } catch (NumberFormatException e) {
-      forwardWithError(request, response, "Please select a valid room.");
+      forwardWithError(request, response, "Please select a valid room.", role);
       return;
     }
     if (roomId <= 0) {
-      forwardWithError(request, response, "Please select a valid room.");
+      forwardWithError(request, response, "Please select a valid room.", role);
       return;
     }
 
@@ -118,12 +116,14 @@ public class AddReservationServlet extends HttpServlet {
       checkInDate = LocalDate.parse(checkInDateRaw);
       checkOutDate = LocalDate.parse(checkOutDateRaw);
     } catch (DateTimeParseException e) {
-      forwardWithError(request, response, "Please enter valid check-in and check-out dates.");
+      forwardWithError(
+          request, response, "Please enter valid check-in and check-out dates.", role);
       return;
     }
 
     if (!checkInDate.isBefore(checkOutDate)) {
-      forwardWithError(request, response, "Check-in date must be earlier than check-out date.");
+      forwardWithError(
+          request, response, "Check-in date must be earlier than check-out date.", role);
       return;
     }
 
@@ -132,7 +132,7 @@ public class AddReservationServlet extends HttpServlet {
       if (!"PENDING".equals(normalizedStatus)
           && !"CONFIRMED".equals(normalizedStatus)
           && !"CANCELLED".equals(normalizedStatus)) {
-        forwardWithError(request, response, "Invalid reservation status.");
+        forwardWithError(request, response, "Invalid reservation status.", role);
         return;
       }
       status = normalizedStatus;
@@ -143,7 +143,7 @@ public class AddReservationServlet extends HttpServlet {
     if (selectedRoom == null
         || !selectedRoom.isActive()
         || !roomType.equals(selectedRoom.getRoomType())) {
-      forwardWithError(request, response, "Please select a valid room.");
+      forwardWithError(request, response, "Please select a valid room.", role);
       return;
     }
 
@@ -152,12 +152,17 @@ public class AddReservationServlet extends HttpServlet {
       forwardWithError(
           request,
           response,
-          "This room is already reserved for the selected dates.");
+          "This room is already reserved for the selected dates.",
+          role);
       return;
     }
     String reservationNo = reservationDAO.generateReservationNo();
     if (reservationNo == null) {
-      forwardWithError(request, response, "Unable to generate reservation number. Please try again.");
+      forwardWithError(
+          request,
+          response,
+          "Unable to generate reservation number. Please try again.",
+          role);
       return;
     }
 
@@ -185,21 +190,7 @@ public class AddReservationServlet extends HttpServlet {
     }
 
     setRoomTypes(request);
-    request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
-  }
-
-  private boolean isAdmin(HttpServletRequest request) {
-    HttpSession session = request.getSession(false);
-    if (session == null) {
-      return false;
-    }
-    Object userObj = session.getAttribute("authUser");
-    if (!(userObj instanceof User)) {
-      return false;
-    }
-    User user = (User) userObj;
-    String role = user.getRole();
-    return role != null && "ADMIN".equalsIgnoreCase(role);
+    request.getRequestDispatcher(resolveView(role)).forward(request, response);
   }
 
   private void preserveFormValues(
@@ -227,11 +218,18 @@ public class AddReservationServlet extends HttpServlet {
   }
 
   private void forwardWithError(
-      HttpServletRequest request, HttpServletResponse response, String message)
+      HttpServletRequest request, HttpServletResponse response, String message, String role)
       throws ServletException, IOException {
     request.setAttribute("error", message);
     setRoomTypes(request);
-    request.getRequestDispatcher("/WEB-INF/views/add-reservation.jsp").forward(request, response);
+    request.getRequestDispatcher(resolveView(role)).forward(request, response);
+  }
+
+  private String resolveView(String role) {
+    if (AuthHelper.ROLE_ADMIN.equals(role)) {
+      return "/WEB-INF/views/add-reservation.jsp";
+    }
+    return "/WEB-INF/views/staff-add-reservation.jsp";
   }
 
   private void setRoomTypes(HttpServletRequest request) {

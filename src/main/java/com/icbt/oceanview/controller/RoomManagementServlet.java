@@ -2,7 +2,6 @@ package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.RoomManagementDAO;
 import com.icbt.oceanview.model.RoomInfo;
-import com.icbt.oceanview.model.User;
 import com.icbt.oceanview.util.RoomTypes;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -15,26 +14,29 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-@WebServlet({"/admin/rooms", "/admin/api/room-price", "/admin/api/rooms"})
+@WebServlet({"/admin/rooms", "/api/room-price", "/api/rooms"})
 public class RoomManagementServlet extends HttpServlet {
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login");
-      return;
-    }
-
     String servletPath = request.getServletPath();
-    if ("/admin/api/room-price".equals(servletPath)) {
+    if ("/api/room-price".equals(servletPath)) {
+      if (AuthHelper.requireRole(request, response, true, true) == null) {
+        return;
+      }
       handlePriceApi(request, response);
       return;
     }
-    if ("/admin/api/rooms".equals(servletPath)) {
+    if ("/api/rooms".equals(servletPath)) {
+      if (AuthHelper.requireRole(request, response, true, true) == null) {
+        return;
+      }
       handleRoomsApi(request, response);
+      return;
+    }
+    if (AuthHelper.requireRole(request, response, true, false) == null) {
       return;
     }
 
@@ -97,14 +99,12 @@ public class RoomManagementServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     request.setCharacterEncoding("UTF-8");
-    if (!isAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login");
-      return;
-    }
-
     String servletPath = request.getServletPath();
     if (!"/admin/rooms".equals(servletPath)) {
       response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+      return;
+    }
+    if (AuthHelper.requireRole(request, response, true, false) == null) {
       return;
     }
 
@@ -281,21 +281,6 @@ public class RoomManagementServlet extends HttpServlet {
     request.setAttribute("roomTypes", RoomTypes.ROOM_TYPES);
     request.getRequestDispatcher("/WEB-INF/views/manage-rooms.jsp").forward(request, response);
   }
-
-  private boolean isAdmin(HttpServletRequest request) {
-    HttpSession session = request.getSession(false);
-    if (session == null) {
-      return false;
-    }
-    Object userObj = session.getAttribute("authUser");
-    if (!(userObj instanceof User)) {
-      return false;
-    }
-    User user = (User) userObj;
-    String role = user.getRole();
-    return role != null && "ADMIN".equalsIgnoreCase(role);
-  }
-
 
   private String trimParam(HttpServletRequest request, String name) {
     String value = request.getParameter(name);

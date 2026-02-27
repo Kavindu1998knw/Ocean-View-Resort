@@ -26,14 +26,14 @@
             <h1 class="h3">Edit Reservation</h1>
             <p>Update reservation details and status.</p>
         </div>
-        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/admin/reservations">Back to Reservations</a>
+        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/reservations">Back to Reservations</a>
     </div>
 
     <c:if test="${not empty error}">
         <div class="alert alert-danger" role="alert">${error}</div>
     </c:if>
 
-    <form method="post" action="${pageContext.request.contextPath}/admin/reservation/update" class="card card-soft">
+    <form method="post" action="${pageContext.request.contextPath}/reservations/update" class="card card-soft">
         <div class="card-body p-4">
             <input type="hidden" name="id" value="${reservation.id}">
 
@@ -151,7 +151,7 @@
             </div>
         </div>
         <div class="card-footer d-flex justify-content-end gap-2">
-            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/admin/reservations">Cancel</a>
+            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/reservations">Cancel</a>
             <button type="submit" class="btn btn-primary">Update Reservation</button>
         </div>
     </form>
@@ -197,7 +197,7 @@
             }
 
             try {
-                const url = contextPath + "/admin/api/rooms?roomType=" + encodeURIComponent(roomType);
+                const url = contextPath + "/api/rooms?roomType=" + encodeURIComponent(roomType);
                 const response = await fetch(url, {headers: {"Accept": "application/json"}});
                 if (!response.ok) {
                     setRoomSelectState(false, "No active rooms available for this room type.");
@@ -242,3 +242,4 @@
 </script>
 </body>
 </html>
+

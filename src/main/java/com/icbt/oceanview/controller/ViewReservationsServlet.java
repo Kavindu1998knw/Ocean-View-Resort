@@ -2,7 +2,6 @@ package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.ReservationDAO;
 import com.icbt.oceanview.model.Reservation;
-import com.icbt.oceanview.model.User;
 import java.io.IOException;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -10,16 +9,14 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-@WebServlet("/admin/reservations")
+@WebServlet("/reservations")
 public class ViewReservationsServlet extends HttpServlet {
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    if (!isStaffOrAdmin(request)) {
-      response.sendRedirect(request.getContextPath() + "/login");
+    String role = AuthHelper.requireRole(request, response, true, true);
+    if (role == null) {
       return;
     }
 
@@ -34,20 +31,11 @@ public class ViewReservationsServlet extends HttpServlet {
       request.setAttribute("error", error);
     }
     request.setAttribute("reservations", reservations);
-    request.getRequestDispatcher("/WEB-INF/views/view-reservations.jsp").forward(request, response);
-  }
-
-  private boolean isStaffOrAdmin(HttpServletRequest request) {
-    HttpSession session = request.getSession(false);
-    if (session == null) {
-      return false;
+    if (AuthHelper.ROLE_ADMIN.equals(role)) {
+      request.getRequestDispatcher("/WEB-INF/views/view-reservations.jsp").forward(request, response);
+      return;
     }
-    Object userObj = session.getAttribute("authUser");
-    if (!(userObj instanceof User)) {
-      return false;
-    }
-    User user = (User) userObj;
-    String role = user.getRole();
-    return role != null && ("ADMIN".equalsIgnoreCase(role) || "STAFF".equalsIgnoreCase(role));
+    request.getRequestDispatcher("/WEB-INF/views/staff-view-reservations.jsp")
+        .forward(request, response);
   }
 }

@@ -2,16 +2,16 @@
     <div class="sidebar-inner">
         <div class="sidebar-title">Admin Menu</div>
         <nav class="nav flex-column sidebar-nav">
-            <a class="nav-link" href="${pageContext.request.contextPath}/admin/dashboard">
+            <a class="nav-link" href="${pageContext.request.contextPath}/dashboard">
                 <span class="dot"></span>Dashboard
             </a>
-            <a class="nav-link" href="${pageContext.request.contextPath}/admin/reservation">
+            <a class="nav-link" href="${pageContext.request.contextPath}/reservations/add">
                 <span class="dot"></span>Add New Reservation
             </a>
-            <a class="nav-link" href="${pageContext.request.contextPath}/admin/reservations">
+            <a class="nav-link" href="${pageContext.request.contextPath}/reservations">
                 <span class="dot"></span>View Reservations
             </a>
-            <a class="nav-link" href="${pageContext.request.contextPath}/admin/bill">
+            <a class="nav-link" href="${pageContext.request.contextPath}/bill">
                 <span class="dot"></span>Calculate &amp; Print Bill
             </a>
             <a class="nav-link" href="${pageContext.request.contextPath}/admin/rooms">
@@ -26,3 +26,4 @@
         </nav>
     </div>
 </aside>
+

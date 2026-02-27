@@ -27,8 +27,8 @@
             <p>Find and review a reservation quickly.</p>
         </div>
         <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/staff/dashboard">Back to Dashboard</a>
-            <a class="btn btn-primary" href="${pageContext.request.contextPath}/staff/reservations">View All Reservations</a>
+            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
+            <a class="btn btn-primary" href="${pageContext.request.contextPath}/reservations">View All Reservations</a>
         </div>
     </div>
 
@@ -39,7 +39,7 @@
         <div class="alert alert-danger" role="alert">${error}</div>
     </c:if>
 
-    <form method="post" action="${pageContext.request.contextPath}/staff/search-reservation" class="card card-soft mb-4">
+    <form method="post" action="${pageContext.request.contextPath}/reservations/search" class="card card-soft mb-4">
         <div class="card-body p-4">
             <div class="row g-3 align-items-end">
                 <div class="col-md-9">
@@ -120,14 +120,14 @@
             </div>
             <div class="card-footer d-flex gap-2 justify-content-end">
                 <a
-                    href="${pageContext.request.contextPath}/staff/reservation/edit?id=${reservation.id}"
+                    href="${pageContext.request.contextPath}/reservations/edit?id=${reservation.id}"
                     class="btn btn-outline-primary btn-action"
                 >
                     Edit
                 </a>
                 <form
                     method="post"
-                    action="${pageContext.request.contextPath}/staff/reservation/delete"
+                    action="${pageContext.request.contextPath}/reservations/delete"
                     onsubmit="return confirm('Are you sure you want to delete this reservation?');"
                 >
                     <input type="hidden" name="id" value="${reservation.id}" />
@@ -147,3 +147,4 @@
 </div>
 </body>
 </html>
+

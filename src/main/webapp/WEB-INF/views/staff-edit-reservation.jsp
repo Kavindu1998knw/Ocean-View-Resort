@@ -25,7 +25,7 @@
             <h1 class="h3">Edit Reservation</h1>
             <p>Update guest booking details.</p>
         </div>
-        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/staff/reservations">Back to Reservations</a>
+        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/reservations">Back to Reservations</a>
     </div>
 
     <% String errorMsg = (String) request.getAttribute("error"); %>
@@ -48,7 +48,7 @@
 
     <div class="card card-soft">
         <div class="card-body p-4 p-md-5">
-            <form action="${pageContext.request.contextPath}/staff/reservation/update" method="POST" class="row g-3">
+            <form action="${pageContext.request.contextPath}/reservations/update" method="POST" class="row g-3">
                 <input type="hidden" name="id" value="<%= reservationIdVal %>" />
                 <div class="col-md-6">
                     <label for="reservationNumber" class="form-label">Reservation Number</label>
@@ -174,7 +174,7 @@
 
                 <div class="col-12 d-flex gap-2 pt-2">
                     <button type="submit" class="btn btn-primary px-4">Update Reservation</button>
-                    <a href="${pageContext.request.contextPath}/staff/reservations" class="btn btn-outline-secondary px-4">Cancel</a>
+                    <a href="${pageContext.request.contextPath}/reservations" class="btn btn-outline-secondary px-4">Cancel</a>
                 </div>
             </form>
         </div>
@@ -228,7 +228,7 @@
             }
 
             try {
-                const url = contextPath + "/staff/api/rooms?roomType=" + encodeURIComponent(roomType);
+                const url = contextPath + "/api/rooms?roomType=" + encodeURIComponent(roomType);
                 const response = await fetch(url, {headers: {"Accept": "application/json"}});
                 if (!response.ok) {
                     setRoomSelectState(false, "No active rooms available for this room type.");
@@ -272,3 +272,4 @@
 </script>
 </body>
 </html>
+

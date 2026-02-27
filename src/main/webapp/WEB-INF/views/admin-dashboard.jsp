@@ -74,7 +74,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0">Recent Reservations</h5>
-                            <a class="btn btn-sm btn-outline-primary" href="${pageContext.request.contextPath}/admin/reservations">View all</a>
+                            <a class="btn btn-sm btn-outline-primary" href="${pageContext.request.contextPath}/reservations">View all</a>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-striped table-hover table-clean align-middle mb-0">
@@ -133,7 +133,7 @@
             <div class="col-12 col-xl-4">
                 <div id="searchReservation" class="search-card mb-4">
                     <h5 class="mb-3">Search Reservation</h5>
-                    <form class="d-flex flex-column gap-2" action="${pageContext.request.contextPath}/admin/reservations/search" method="get">
+                    <form class="d-flex flex-column gap-2" action="${pageContext.request.contextPath}/reservations/search" method="get">
                         <label for="reservationNo" class="form-label">Reservation Number</label>
                         <input
                             type="text"
@@ -150,8 +150,8 @@
                     <div class="card-body">
                         <h5 class="mb-3">Quick Actions</h5>
                         <div class="d-grid gap-2">
-                            <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/reservation">Add New Reservation</a>
-                            <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/bill">Calculate &amp; Print Bill</a>
+                            <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/reservations/add">Add New Reservation</a>
+                            <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/bill">Calculate &amp; Print Bill</a>
                             <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/rooms">Manage Rooms</a>
                             <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/admin/staff-users">Manage Staff Users</a>
                         </div>
@@ -168,4 +168,5 @@
         crossorigin="anonymous"></script>
 </body>
 </html>
+
 

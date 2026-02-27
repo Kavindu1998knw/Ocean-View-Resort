@@ -50,12 +50,8 @@ public class LoginServlet extends HttpServlet {
     session.setAttribute("authRole", user.getRole());
 
     String role = user.getRole() == null ? "" : user.getRole().trim();
-    if ("ADMIN".equalsIgnoreCase(role)) {
-      response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-      return;
-    }
-    if ("STAFF".equalsIgnoreCase(role)) {
-      response.sendRedirect(request.getContextPath() + "/staff/dashboard");
+    if ("ADMIN".equalsIgnoreCase(role) || "STAFF".equalsIgnoreCase(role)) {
+      response.sendRedirect(request.getContextPath() + "/dashboard");
       return;
     }
 

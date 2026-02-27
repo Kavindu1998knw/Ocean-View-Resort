@@ -27,8 +27,8 @@
             <p>Find and manage a reservation quickly.</p>
         </div>
         <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/admin/dashboard">Back to Dashboard</a>
-            <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/reservations">View All Reservations</a>
+            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
+            <a class="btn btn-primary" href="${pageContext.request.contextPath}/reservations">View All Reservations</a>
         </div>
     </div>
 
@@ -39,7 +39,7 @@
         <div class="alert alert-danger" role="alert">${error}</div>
     </c:if>
 
-    <form method="get" action="${pageContext.request.contextPath}/admin/reservations/search" class="card card-soft mb-4">
+    <form method="get" action="${pageContext.request.contextPath}/reservations/search" class="card card-soft mb-4">
         <div class="card-body p-4">
             <div class="row g-3 align-items-end">
                 <div class="col-md-9">
@@ -120,13 +120,13 @@
             </div>
             <div class="card-footer d-flex gap-2 justify-content-end">
                 <a
-                    href="${pageContext.request.contextPath}/admin/reservation/edit?id=${reservation.id}"
+                    href="${pageContext.request.contextPath}/reservations/edit?id=${reservation.id}"
                     class="btn btn-outline-primary btn-action"
                 >
                     Edit
                 </a>
                 <a
-                    href="${pageContext.request.contextPath}/admin/reservation/delete?id=${reservation.id}"
+                    href="${pageContext.request.contextPath}/reservations/delete?id=${reservation.id}"
                     class="btn btn-outline-danger btn-action"
                     onclick="return confirm('Are you sure you want to delete this reservation?');"
                 >
@@ -148,3 +148,4 @@
 </div>
 </body>
 </html>
+

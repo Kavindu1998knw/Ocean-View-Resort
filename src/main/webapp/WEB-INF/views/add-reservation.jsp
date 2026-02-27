@@ -42,7 +42,7 @@
             <h1 class="h3">Add New Reservation</h1>
             <p>Create and save guest bookings for Ocean View Resort.</p>
         </div>
-        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/admin/dashboard">Back to Dashboard</a>
+        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
     </div>
 
     <% String errorMsg = (String) request.getAttribute("error"); %>
@@ -68,7 +68,7 @@
 
     <div class="card card-soft">
         <div class="card-body p-4 p-md-5">
-            <form action="${pageContext.request.contextPath}/admin/reservation" method="POST" class="row g-3">
+            <form action="${pageContext.request.contextPath}/reservations/add" method="POST" class="row g-3">
                 <div class="col-md-6">
                     <label for="reservationNumber" class="form-label">Reservation Number</label>
                     <input
@@ -226,7 +226,7 @@
 
                 <div class="col-12 d-flex gap-2 pt-2">
                     <button type="submit" class="btn btn-primary px-4">Save Reservation</button>
-                    <a href="${pageContext.request.contextPath}/admin/dashboard" class="btn btn-outline-secondary px-4">Cancel</a>
+                    <a href="${pageContext.request.contextPath}/dashboard" class="btn btn-outline-secondary px-4">Cancel</a>
                 </div>
             </form>
         </div>
@@ -384,7 +384,7 @@
             }
 
             try {
-                const url = contextPath + "/admin/api/rooms?roomType=" + encodeURIComponent(roomType);
+                const url = contextPath + "/api/rooms?roomType=" + encodeURIComponent(roomType);
                 const response = await fetch(url, {headers: {"Accept": "application/json"}});
                 if (!response.ok) {
                     showValidation("Unable to load rooms. Please try again.");
@@ -438,3 +438,4 @@
 </script>
 </body>
 </html>
+

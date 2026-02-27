@@ -26,7 +26,7 @@
             <h1 class="h3">Manage Staff Users</h1>
             <p>Create and manage staff access accounts.</p>
         </div>
-        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/admin/dashboard">Back to Dashboard</a>
+        <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
     </div>
 
     <c:if test="${not empty success}">
@@ -143,3 +143,4 @@
 </div>
 </body>
 </html>
+

@@ -29,8 +29,8 @@
             <p>Review current reservations and manage updates.</p>
         </div>
         <div class="d-flex gap-2">
-            <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/reservation">Add New Reservation</a>
-            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/admin/dashboard">Back to Dashboard</a>
+            <a class="btn btn-primary" href="${pageContext.request.contextPath}/reservations/add">Add New Reservation</a>
+            <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
         </div>
     </div>
 
@@ -80,13 +80,13 @@
                                 <td class="actions text-center align-middle">
                                     <div class="action-buttons">
                                         <a
-                                            href="${pageContext.request.contextPath}/admin/reservation/edit?id=${r.id}"
+                                            href="${pageContext.request.contextPath}/reservations/edit?id=${r.id}"
                                             class="btn btn-sm btn-outline-primary btn-action"
                                         >
                                             Edit
                                         </a>
                                         <a
-                                            href="${pageContext.request.contextPath}/admin/reservation/delete?id=${r.id}"
+                                            href="${pageContext.request.contextPath}/reservations/delete?id=${r.id}"
                                             class="btn btn-sm btn-outline-danger btn-action"
                                             onclick="return confirm('Are you sure you want to delete this reservation?');"
                                         >
@@ -107,3 +107,4 @@
 </div>
 </body>
 </html>
+

@@ -66,7 +66,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="mb-0">Recent Reservations</h5>
-                                <a class="btn btn-sm btn-outline-primary" href="${pageContext.request.contextPath}/staff/reservations">View all</a>
+                                <a class="btn btn-sm btn-outline-primary" href="${pageContext.request.contextPath}/reservations">View all</a>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover table-clean align-middle mb-0">
@@ -124,7 +124,7 @@
                     <div class="card card-soft">
                         <div class="card-body">
                             <h5 class="mb-3">Search Reservation</h5>
-                            <form method="post" action="${pageContext.request.contextPath}/staff/search-reservation">
+                            <form method="post" action="${pageContext.request.contextPath}/reservations/search">
                                 <div class="mb-3">
                                     <label for="reservationNo" class="form-label">Reservation Number</label>
                                     <input
@@ -145,10 +145,10 @@
                         <div class="card-body">
                             <h5 class="mb-3">Quick Actions</h5>
                             <div class="d-grid gap-2">
-                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/staff/search-reservation">Search Reservation</a>
-                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/staff/reservations">View Reservations</a>
-                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/staff/reservation/add">Add New Reservation</a>
-                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/staff/bill">Calculate &amp; Print Bill</a>
+                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/reservations/search">Search Reservation</a>
+                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/reservations">View Reservations</a>
+                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/reservations/add">Add New Reservation</a>
+                                <a class="btn btn-outline-primary" href="${pageContext.request.contextPath}/bill">Calculate &amp; Print Bill</a>
                             </div>
                         </div>
                     </div>
@@ -159,3 +159,4 @@
 </div>
 </body>
 </html>
+

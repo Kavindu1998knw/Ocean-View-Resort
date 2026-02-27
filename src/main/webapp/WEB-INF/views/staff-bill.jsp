@@ -105,7 +105,7 @@
             <h1 class="h3">Calculate &amp; Print Bill</h1>
             <p>Generate a bill summary for a reservation.</p>
         </div>
-        <a class="btn btn-outline-secondary no-print" href="${pageContext.request.contextPath}/staff/dashboard">Back to Dashboard</a>
+        <a class="btn btn-outline-secondary no-print" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
     </div>
 
     <c:if test="${not empty error}">
@@ -115,7 +115,7 @@
         <div class="alert alert-warning" role="alert">No reservation found.</div>
     </c:if>
 
-    <form method="get" action="${pageContext.request.contextPath}/staff/bill" class="card card-soft mb-4 no-print" id="billForm">
+    <form method="get" action="${pageContext.request.contextPath}/bill" class="card card-soft mb-4 no-print" id="billForm">
         <div class="card-body p-4">
             <div class="row g-3 align-items-end">
                 <div class="col-md-9">
@@ -308,3 +308,4 @@
 </script>
 </body>
 </html>
+
