@@ -1,0 +1,95 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package controller {
+  class LoginServlet
+  class LogoutServlet
+  class AdminDashboardServlet
+  class StaffDashboardServlet
+  class AddReservationServlet
+  class EditReservationServlet
+  class DeleteReservationServlet
+  class ViewReservationsServlet
+  class SearchReservationServlet
+  class BillServlet
+  class RoomManagementServlet
+  class StaffAddReservationServlet
+  class StaffEditReservationServlet
+  class StaffDeleteReservationServlet
+  class StaffViewReservationsServlet
+  class StaffSearchReservationServlet
+  class StaffBillServlet
+  class StaffRoomApiServlet
+  class ManageStaffUsersServlet
+}
+
+package dao {
+  class UserDAO
+  class ReservationDAO
+  class RoomManagementDAO
+}
+
+package model {
+  class User {
+    -id: int
+    -fullName: String
+    -email: String
+    -password: String
+    -role: String
+    -active: boolean
+  }
+  class Reservation {
+    -id: int
+    -reservationNo: String
+    -guestFullName: String
+    -guestEmail: String
+    -contactNumber: String
+    -roomType: String
+    -roomId: Integer
+    -numberOfGuests: int
+    -checkInDate: LocalDate
+    -checkOutDate: LocalDate
+    -status: String
+    -createdAt: LocalDateTime
+  }
+  class RoomInfo {
+    -id: int
+    -roomNo: String
+    -roomType: String
+    -price: BigDecimal
+    -active: boolean
+  }
+}
+
+package util {
+  class DBUtil <<utility>> {
+    +getConnection(): Connection
+  }
+  class RoomTypes <<enum>>
+}
+
+controller.LoginServlet --> dao.UserDAO
+controller.ManageStaffUsersServlet --> dao.UserDAO
+
+controller.AddReservationServlet --> dao.ReservationDAO
+controller.AddReservationServlet --> dao.RoomManagementDAO
+controller.EditReservationServlet --> dao.ReservationDAO
+controller.DeleteReservationServlet --> dao.ReservationDAO
+controller.ViewReservationsServlet --> dao.ReservationDAO
+controller.SearchReservationServlet --> dao.ReservationDAO
+controller.BillServlet --> dao.ReservationDAO
+controller.BillServlet --> dao.RoomManagementDAO
+
+controller.RoomManagementServlet --> dao.RoomManagementDAO
+controller.StaffRoomApiServlet --> dao.RoomManagementDAO
+
+dao.UserDAO --> util.DBUtil
+dao.ReservationDAO --> util.DBUtil
+dao.RoomManagementDAO --> util.DBUtil
+
+dao.UserDAO ..> model.User
+dao.ReservationDAO ..> model.Reservation
+dao.RoomManagementDAO ..> model.RoomInfo
+
+model.RoomInfo ..> util.RoomTypes
+@enduml

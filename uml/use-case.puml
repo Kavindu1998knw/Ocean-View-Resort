@@ -1,0 +1,64 @@
+@startuml
+left to right direction
+actor Admin
+actor Staff
+
+rectangle "Online Room Reservation System" {
+  usecase "Authenticate User" as UC_Login
+  usecase "Logout" as UC_Logout
+  usecase "View Dashboard" as UC_Dash
+  usecase "View Help" as UC_Help
+
+  usecase "Manage Reservations" as UC_MngRes
+  usecase "Add Reservation" as UC_AddRes
+  usecase "View Reservations" as UC_ViewRes
+  usecase "Edit Reservation" as UC_EditRes
+  usecase "Delete Reservation" as UC_DelRes
+  usecase "Search Reservation" as UC_SearchRes
+
+  usecase "Calculate Bill" as UC_Bill
+
+  usecase "Manage Rooms" as UC_MngRooms
+  usecase "Add Room" as UC_AddRoom
+  usecase "View Rooms" as UC_ViewRoom
+  usecase "Edit Room" as UC_EditRoom
+  usecase "Delete Room" as UC_DelRoom
+  usecase "Activate/Deactivate Room" as UC_ToggleRoom
+
+  usecase "Manage Staff Users" as UC_MngStaff
+  usecase "Validate Reservation Details" as UC_ValidateRes
+  usecase "Retrieve Reservation & Rate" as UC_GetBillData
+}
+
+Admin --> UC_Login
+Admin --> UC_Logout
+Admin --> UC_Dash
+Admin --> UC_Help
+Admin --> UC_MngRes
+Admin --> UC_Bill
+Admin --> UC_MngRooms
+Admin --> UC_MngStaff
+
+Staff --> UC_Login
+Staff --> UC_Logout
+Staff --> UC_Dash
+Staff --> UC_Help
+Staff --> UC_MngRes
+Staff --> UC_Bill
+
+UC_MngRes --> UC_AddRes : <<include>>
+UC_MngRes --> UC_ViewRes : <<include>>
+UC_MngRes --> UC_EditRes : <<include>>
+UC_MngRes --> UC_DelRes : <<include>>
+UC_MngRes --> UC_SearchRes : <<include>>
+
+UC_AddRes --> UC_ValidateRes : <<include>>
+UC_EditRes --> UC_ValidateRes : <<include>>
+UC_Bill --> UC_GetBillData : <<include>>
+
+UC_MngRooms --> UC_AddRoom : <<include>>
+UC_MngRooms --> UC_ViewRoom : <<include>>
+UC_MngRooms --> UC_EditRoom : <<include>>
+UC_MngRooms --> UC_DelRoom : <<include>>
+UC_MngRooms --> UC_ToggleRoom : <<include>>
+@enduml

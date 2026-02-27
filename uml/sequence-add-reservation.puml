@@ -1,0 +1,27 @@
+@startuml
+actor Staff
+participant "AddReservationServlet" as Controller
+participant "RoomManagementDAO" as RoomDAO
+participant "ReservationDAO" as ResDAO
+participant "DBUtil" as DB
+
+Staff -> Controller: Submit reservation form
+Controller -> Controller: Validate inputs
+Controller -> RoomDAO: findById(roomId)
+RoomDAO -> DB: getConnection()
+RoomDAO --> Controller: RoomInfo
+Controller -> ResDAO: hasOverlappingReservationForRoom(...)
+ResDAO -> DB: getConnection()
+ResDAO --> Controller: overlap? (bool)
+alt overlap exists
+  Controller --> Staff: show error
+else no overlap
+  Controller -> ResDAO: generateReservationNo()
+  ResDAO -> DB: getConnection()
+  ResDAO --> Controller: reservationNo
+  Controller -> ResDAO: insert(reservation)
+  ResDAO -> DB: getConnection()
+  ResDAO --> Controller: success
+  Controller --> Staff: success message + redirect
+end
+@enduml
