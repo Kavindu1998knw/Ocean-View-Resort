@@ -3,12 +3,17 @@ package com.icbt.oceanview.controller;
 import com.icbt.oceanview.dao.RoomManagementDAO;
 import com.icbt.oceanview.model.RoomInfo;
 import com.icbt.oceanview.util.RoomTypes;
+import com.icbt.oceanview.util.validation.RequestUtil;
+import com.icbt.oceanview.util.validation.ValidationResult;
+import com.icbt.oceanview.util.validation.ValidationUtil;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -42,10 +47,10 @@ public class RoomManagementServlet extends HttpServlet {
 
     RoomManagementDAO dao = new RoomManagementDAO();
 
-    String toggleIdParam = trimParam(request, "toggleId");
-    if (!toggleIdParam.isEmpty()) {
-      int toggleId = parseId(toggleIdParam);
-      if (toggleId <= 0) {
+    String toggleIdParam = ValidationUtil.trimToNull(request.getParameter("toggleId"));
+    if (toggleIdParam != null) {
+      Integer toggleId = ValidationUtil.parseIntSafe(toggleIdParam);
+      if (!ValidationUtil.isPositiveInt(toggleId)) {
         response.sendRedirect(request.getContextPath() + "/admin/rooms?error=" + encode("Invalid room ID."));
         return;
       }
@@ -58,10 +63,10 @@ public class RoomManagementServlet extends HttpServlet {
       return;
     }
 
-    String deleteIdParam = trimParam(request, "deleteId");
-    if (!deleteIdParam.isEmpty()) {
-      int deleteId = parseId(deleteIdParam);
-      if (deleteId <= 0) {
+    String deleteIdParam = ValidationUtil.trimToNull(request.getParameter("deleteId"));
+    if (deleteIdParam != null) {
+      Integer deleteId = ValidationUtil.parseIntSafe(deleteIdParam);
+      if (!ValidationUtil.isPositiveInt(deleteId)) {
         response.sendRedirect(request.getContextPath() + "/admin/rooms?error=" + encode("Invalid room ID."));
         return;
       }
@@ -74,24 +79,27 @@ public class RoomManagementServlet extends HttpServlet {
       return;
     }
 
-    String editIdParam = trimParam(request, "editId");
-    if (!editIdParam.isEmpty()) {
-      int editId = parseId(editIdParam);
-      if (editId > 0) {
+    String editIdParam = ValidationUtil.trimToNull(request.getParameter("editId"));
+    if (editIdParam != null) {
+      Integer editId = ValidationUtil.parseIntSafe(editIdParam);
+      if (ValidationUtil.isPositiveInt(editId)) {
         RoomInfo editRoom = dao.findById(editId);
         if (editRoom != null) {
-          request.setAttribute("editRoom", editRoom);
+          request.setAttribute("oldValues", toOldValues(editRoom));
         } else {
-          request.setAttribute("error", "Room not found.");
+          Map<String, String> errors = new LinkedHashMap<>();
+          errors.put("global", "Room not found.");
+          request.setAttribute("errors", errors);
         }
       } else {
-        request.setAttribute("error", "Invalid room ID.");
+        Map<String, String> errors = new LinkedHashMap<>();
+        errors.put("global", "Invalid room ID.");
+        request.setAttribute("errors", errors);
       }
     }
 
-    List<RoomInfo> rooms = dao.findAllRoomsWithPrices();
-    request.setAttribute("rooms", rooms);
-    request.setAttribute("roomTypes", RoomTypes.ROOM_TYPES);
+    request.setAttribute("rooms", dao.findAllRoomsWithPrices());
+    request.setAttribute("roomTypes", RoomTypes.getRoomTypes());
     request.getRequestDispatcher("/WEB-INF/views/manage-rooms.jsp").forward(request, response);
   }
 
@@ -108,87 +116,93 @@ public class RoomManagementServlet extends HttpServlet {
       return;
     }
 
-    String idParam = trimParam(request, "id");
-    String roomNo = trimParam(request, "roomNo");
-    String roomType = trimParam(request, "roomType");
-    String priceRaw = trimParam(request, "pricePerNight");
+    ValidationResult vr = new ValidationResult();
+    RequestUtil.collectOldValues(request, vr, "id", "roomNo", "roomType", "pricePerNight");
     boolean active = request.getParameter("active") != null;
+    vr.getOldValues().put("active", String.valueOf(active));
 
-    if (roomNo.isEmpty() || roomType.isEmpty() || priceRaw.isEmpty()) {
-      forwardWithError(
-          request, response, "Please fill all required fields.", idParam, roomNo, roomType, priceRaw, active);
-      return;
+    String idParam = ValidationUtil.trimToNull(request.getParameter("id"));
+    String roomNo = ValidationUtil.trimToNull(request.getParameter("roomNo"));
+    String roomType = ValidationUtil.trimToNull(request.getParameter("roomType"));
+    BigDecimal price = ValidationUtil.parseBigDecimalSafe(request.getParameter("pricePerNight"));
+
+    if (ValidationUtil.isBlank(roomNo)) {
+      vr.addError("roomNo", "Room number is required.");
     }
 
-    if (!RoomTypes.ROOM_TYPES.contains(roomType)) {
-      forwardWithError(
-          request, response, "Invalid room type selected.", idParam, roomNo, roomType, priceRaw, active);
-      return;
+    if (ValidationUtil.isBlank(roomType)) {
+      vr.addError("roomType", "Room type is required.");
+    } else if (!RoomTypes.getRoomTypes().contains(roomType)) {
+      vr.addError("roomType", "Invalid room type selected.");
     }
 
-    BigDecimal price;
-    try {
-      price = new BigDecimal(priceRaw);
-    } catch (NumberFormatException e) {
-      forwardWithError(
-          request, response, "Price must be a valid numeric value.", idParam, roomNo, roomType, priceRaw, active);
-      return;
-    }
-
-    if (price.compareTo(BigDecimal.ZERO) <= 0) {
-      forwardWithError(
-          request, response, "Price must be greater than 0.", idParam, roomNo, roomType, priceRaw, active);
-      return;
+    if (price == null) {
+      vr.addError("pricePerNight", "Price must be a valid numeric value.");
+    } else if (!ValidationUtil.isPositiveBigDecimal(price)) {
+      vr.addError("pricePerNight", "Price must be greater than 0.");
     }
 
     RoomManagementDAO dao = new RoomManagementDAO();
-    boolean saved;
-
-    if (idParam.isEmpty()) {
-      if (dao.roomNoExists(roomNo)) {
-        forwardWithError(
-            request, response, "Room number already exists.", "", roomNo, roomType, priceRaw, active);
-        return;
+    Integer id = null;
+    boolean createMode = idParam == null;
+    if (!createMode) {
+      id = ValidationUtil.parseIntSafe(idParam);
+      if (!ValidationUtil.isPositiveInt(id)) {
+        vr.addError("id", "Invalid room ID.");
       }
+    }
+
+    if (vr.error("roomNo") == null) {
+      if (createMode) {
+        if (dao.roomNoExists(roomNo)) {
+          vr.addError("roomNo", "Room number already exists.");
+        }
+      } else if (vr.error("id") == null && dao.roomNoExistsExcludingId(id, roomNo)) {
+        vr.addError("roomNo", "Room number already exists.");
+      }
+    }
+
+    if (vr.hasErrors()) {
+      vr.addError("global", "Please fix the highlighted fields.");
+      request.setAttribute("rooms", dao.findAllRoomsWithPrices());
+      request.setAttribute("roomTypes", RoomTypes.getRoomTypes());
+      RequestUtil.forwardWithErrors(request, response, "/WEB-INF/views/manage-rooms.jsp", vr);
+      return;
+    }
+
+    boolean saved;
+    if (createMode) {
       RoomInfo info = new RoomInfo(roomNo, roomType, active, price);
       saved = dao.createRoomWithPrice(info);
     } else {
-      int id = parseId(idParam);
-      if (id <= 0) {
-        forwardWithError(
-            request, response, "Invalid room ID.", idParam, roomNo, roomType, priceRaw, active);
-        return;
-      }
-      if (dao.roomNoExistsExcludingId(id, roomNo)) {
-        forwardWithError(
-            request, response, "Room number already exists.", idParam, roomNo, roomType, priceRaw, active);
-        return;
-      }
       RoomInfo info = new RoomInfo(id, roomNo, roomType, active, price, null, null);
       saved = dao.updateRoomWithPrice(info);
     }
 
     if (saved) {
       response.sendRedirect(request.getContextPath() + "/admin/rooms?success=" + encode("Room saved successfully."));
-    } else {
-      forwardWithError(
-          request, response, "Failed to save room. Please try again.", idParam, roomNo, roomType, priceRaw, active);
+      return;
     }
+
+    vr.addError("global", "Failed to save room. Please try again.");
+    request.setAttribute("rooms", dao.findAllRoomsWithPrices());
+    request.setAttribute("roomTypes", RoomTypes.getRoomTypes());
+    RequestUtil.forwardWithErrors(request, response, "/WEB-INF/views/manage-rooms.jsp", vr);
   }
 
   private void handlePriceApi(HttpServletRequest request, HttpServletResponse response) throws IOException {
     response.setCharacterEncoding("UTF-8");
     response.setContentType("application/json");
 
-    String roomType = request.getParameter("roomType");
-    if (roomType == null || roomType.trim().isEmpty()) {
+    String roomType = ValidationUtil.trimToNull(request.getParameter("roomType"));
+    if (roomType == null) {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       response.getWriter().write("{\"error\":\"ROOM_TYPE_REQUIRED\"}");
       return;
     }
 
     RoomManagementDAO dao = new RoomManagementDAO();
-    BigDecimal price = dao.findPriceByRoomType(roomType.trim());
+    BigDecimal price = dao.findPriceByRoomType(roomType);
     if (price == null) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       response.getWriter().write("{\"error\":\"NOT_FOUND\"}");
@@ -200,7 +214,7 @@ public class RoomManagementServlet extends HttpServlet {
         .getWriter()
         .write(
             "{\"roomType\":\""
-                + escapeJson(roomType.trim())
+                + escapeJson(roomType)
                 + "\",\"pricePerNight\":"
                 + normalizedPrice
                 + "}");
@@ -210,15 +224,15 @@ public class RoomManagementServlet extends HttpServlet {
     response.setCharacterEncoding("UTF-8");
     response.setContentType("application/json");
 
-    String roomType = request.getParameter("roomType");
-    if (roomType == null || roomType.trim().isEmpty()) {
+    String roomType = ValidationUtil.trimToNull(request.getParameter("roomType"));
+    if (roomType == null) {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       response.getWriter().write("{\"error\":\"ROOM_TYPE_REQUIRED\"}");
       return;
     }
 
     RoomManagementDAO dao = new RoomManagementDAO();
-    List<RoomInfo> rooms = dao.findActiveRoomsByType(roomType.trim());
+    List<RoomInfo> rooms = dao.findActiveRoomsByType(roomType);
     if (rooms.isEmpty()) {
       response.getWriter().write("[]");
       return;
@@ -231,9 +245,10 @@ public class RoomManagementServlet extends HttpServlet {
       if (i > 0) {
         json.append(',');
       }
-      String price = room.getPricePerNight() == null
-          ? "0.00"
-          : room.getPricePerNight().setScale(2, RoundingMode.HALF_UP).toPlainString();
+      String price =
+          room.getPricePerNight() == null
+              ? "0.00"
+              : room.getPricePerNight().setScale(2, RoundingMode.HALF_UP).toPlainString();
       json.append("{\"id\":")
           .append(room.getId())
           .append(",\"roomNo\":\"")
@@ -246,53 +261,15 @@ public class RoomManagementServlet extends HttpServlet {
     response.getWriter().write(json.toString());
   }
 
-  private void forwardWithError(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      String message,
-      String idParam,
-      String roomNo,
-      String roomType,
-      String priceRaw,
-      boolean active)
-      throws ServletException, IOException {
-    request.setAttribute("error", message);
-
-    if (!idParam.isEmpty()) {
-      int id = parseId(idParam);
-      RoomInfo editRoom = new RoomInfo();
-      editRoom.setId(id);
-      editRoom.setRoomNo(roomNo);
-      editRoom.setRoomType(roomType);
-      editRoom.setActive(active);
-      try {
-        editRoom.setPricePerNight(new BigDecimal(priceRaw));
-      } catch (NumberFormatException e) {
-        editRoom.setPricePerNight(null);
-      }
-      request.setAttribute("editRoom", editRoom);
-    }
-
-    request.setAttribute("roomNo", roomNo);
-    request.setAttribute("roomType", roomType);
-    request.setAttribute("pricePerNight", priceRaw);
-    request.setAttribute("active", active);
-    request.setAttribute("rooms", new RoomManagementDAO().findAllRoomsWithPrices());
-    request.setAttribute("roomTypes", RoomTypes.ROOM_TYPES);
-    request.getRequestDispatcher("/WEB-INF/views/manage-rooms.jsp").forward(request, response);
-  }
-
-  private String trimParam(HttpServletRequest request, String name) {
-    String value = request.getParameter(name);
-    return value == null ? "" : value.trim();
-  }
-
-  private int parseId(String value) {
-    try {
-      return Integer.parseInt(value);
-    } catch (NumberFormatException e) {
-      return -1;
-    }
+  private Map<String, String> toOldValues(RoomInfo room) {
+    Map<String, String> oldValues = new LinkedHashMap<>();
+    oldValues.put("id", String.valueOf(room.getId()));
+    oldValues.put("roomNo", room.getRoomNo());
+    oldValues.put("roomType", room.getRoomType());
+    oldValues.put(
+        "pricePerNight", room.getPricePerNight() == null ? "" : room.getPricePerNight().toPlainString());
+    oldValues.put("active", String.valueOf(room.isActive()));
+    return oldValues;
   }
 
   private String encode(String value) {

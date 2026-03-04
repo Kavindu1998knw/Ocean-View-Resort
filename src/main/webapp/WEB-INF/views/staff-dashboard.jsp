@@ -125,16 +125,21 @@
                         <div class="card-body">
                             <h5 class="mb-3">Search Reservation</h5>
                             <form method="post" action="${pageContext.request.contextPath}/reservations/search">
+                                <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
                                 <div class="mb-3">
                                     <label for="reservationNo" class="form-label">Reservation Number</label>
                                     <input
                                         type="text"
-                                        class="form-control"
+                                        class="form-control ${errors['reservationNo'] != null ? 'is-invalid' : ''}"
                                         id="reservationNo"
                                         name="reservationNo"
                                         placeholder="e.g., RSV-10234"
+                                        value="${oldValues['reservationNo']}"
                                         required
                                     />
+                                    <c:if test="${errors['reservationNo'] != null}">
+                                        <div class="invalid-feedback">${errors['reservationNo']}</div>
+                                    </c:if>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">Search</button>
                             </form>

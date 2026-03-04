@@ -32,6 +32,8 @@
         </div>
     </div>
 
+    <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
+
     <c:if test="${not empty success}">
         <div class="alert alert-success" role="alert">${success}</div>
     </c:if>

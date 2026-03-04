@@ -1,5 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isELIgnored="false" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,30 +46,15 @@
         <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
     </div>
 
-    <% String errorMsg = (String) request.getAttribute("error"); %>
-    <% String successMsg = (String) request.getAttribute("success"); %>
-    <% String reservationNoVal = request.getAttribute("reservationNo") == null ? "" : String.valueOf(request.getAttribute("reservationNo")); %>
-    <% String guestFullNameVal = request.getAttribute("guestFullName") == null ? "" : String.valueOf(request.getAttribute("guestFullName")); %>
-    <% String guestEmailVal = request.getAttribute("guestEmail") == null ? "" : String.valueOf(request.getAttribute("guestEmail")); %>
-    <% String contactNumberVal = request.getAttribute("contactNumber") == null ? "" : String.valueOf(request.getAttribute("contactNumber")); %>
-    <% String roomIdVal = request.getAttribute("roomId") == null ? "" : String.valueOf(request.getAttribute("roomId")); %>
-    <% String numberOfGuestsVal = request.getAttribute("numberOfGuests") == null ? "1" : String.valueOf(request.getAttribute("numberOfGuests")); %>
-    <% String checkInDateVal = request.getAttribute("checkInDate") == null ? "" : String.valueOf(request.getAttribute("checkInDate")); %>
-    <% String checkOutDateVal = request.getAttribute("checkOutDate") == null ? "" : String.valueOf(request.getAttribute("checkOutDate")); %>
-    <% String specialRequestsVal = request.getAttribute("specialRequests") == null ? "" : String.valueOf(request.getAttribute("specialRequests")); %>
-    <% String reservationStatusVal = request.getAttribute("reservationStatus") == null ? "PENDING" : String.valueOf(request.getAttribute("reservationStatus")); %>
-
-    <% if (errorMsg != null && !errorMsg.trim().isEmpty()) { %>
-        <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
-    <% } %>
-
-    <% if (successMsg != null && !successMsg.trim().isEmpty()) { %>
-        <div class="alert alert-success" role="alert"><%= successMsg %></div>
-    <% } %>
+    <c:if test="${not empty success}">
+        <div class="alert alert-success" role="alert">${success}</div>
+    </c:if>
 
     <div class="card card-soft">
         <div class="card-body p-4 p-md-5">
             <form action="${pageContext.request.contextPath}/reservations/add" method="POST" class="row g-3">
+                <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
+
                 <div class="col-md-6">
                     <label for="reservationNumber" class="form-label">Reservation Number</label>
                     <input
@@ -76,7 +62,7 @@
                         class="form-control"
                         id="reservationNumber"
                         name="reservationNumber"
-                        value="<%= reservationNoVal %>"
+                        value="${fn:escapeXml(reservationNo)}"
                         placeholder="Auto-generated on save"
                         readonly
                     />
@@ -86,94 +72,118 @@
                     <label for="guestFullName" class="form-label required">Guest Full Name</label>
                     <input
                         type="text"
-                        class="form-control"
+                        class="form-control ${errors['guestFullName'] != null ? 'is-invalid' : ''}"
                         id="guestFullName"
                         name="guestFullName"
-                        value="<%= guestFullNameVal %>"
+                        value="${fn:escapeXml(oldValues['guestFullName'])}"
                         placeholder="e.g., John Fernando"
                         required
                     />
+                    <c:if test="${errors['guestFullName'] != null}">
+                        <div class="invalid-feedback">${errors['guestFullName']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-md-6">
                     <label for="guestEmail" class="form-label required">Guest Email</label>
                     <input
                         type="email"
-                        class="form-control"
+                        class="form-control ${errors['guestEmail'] != null ? 'is-invalid' : ''}"
                         id="guestEmail"
                         name="guestEmail"
-                        value="<%= guestEmailVal %>"
+                        value="${fn:escapeXml(oldValues['guestEmail'])}"
                         placeholder="e.g., john@email.com"
                         required
                     />
+                    <c:if test="${errors['guestEmail'] != null}">
+                        <div class="invalid-feedback">${errors['guestEmail']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-md-6">
                     <label for="contactNumber" class="form-label required">Contact Number</label>
                     <input
                         type="text"
-                        class="form-control"
+                        class="form-control ${errors['contactNumber'] != null ? 'is-invalid' : ''}"
                         id="contactNumber"
                         name="contactNumber"
-                        value="<%= contactNumberVal %>"
+                        value="${fn:escapeXml(oldValues['contactNumber'])}"
                         placeholder="e.g., +94 77 123 4567"
                         required
                     />
+                    <c:if test="${errors['contactNumber'] != null}">
+                        <div class="invalid-feedback">${errors['contactNumber']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-md-6">
                     <label for="roomType" class="form-label required">Room Type</label>
-                    <select id="roomType" name="roomType" class="form-select" required>
-                        <option value="" ${empty roomType ? 'selected' : ''} disabled>Select room type</option>
+                    <select id="roomType" name="roomType" class="form-select ${errors['roomType'] != null ? 'is-invalid' : ''}" required>
+                        <option value="" ${empty oldValues['roomType'] ? 'selected' : ''} disabled>Select room type</option>
                         <c:forEach var="type" items="${roomTypes}">
-                            <option value="${type}" ${type == roomType ? 'selected' : ''}>${type}</option>
+                            <option value="${type}" ${type == oldValues['roomType'] ? 'selected' : ''}>${type}</option>
                         </c:forEach>
                     </select>
+                    <c:if test="${errors['roomType'] != null}">
+                        <div class="invalid-feedback">${errors['roomType']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-md-6">
                     <label for="roomId" class="form-label required">Room (Room No)</label>
-                    <select id="roomId" name="roomId" class="form-select" required>
+                    <select id="roomId" name="roomId" class="form-select ${errors['roomId'] != null ? 'is-invalid' : ''}" required>
                         <option value="" selected disabled>Select room</option>
                     </select>
                     <div id="roomIdHelp" class="form-text text-muted d-none">No active rooms available for this room type.</div>
+                    <c:if test="${errors['roomId'] != null}">
+                        <div class="invalid-feedback">${errors['roomId']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-md-6">
                     <label for="numberOfGuests" class="form-label required">Number of Guests</label>
                     <input
                         type="number"
-                        class="form-control"
+                        class="form-control ${errors['numberOfGuests'] != null ? 'is-invalid' : ''}"
                         id="numberOfGuests"
                         name="numberOfGuests"
                         min="1"
-                        value="<%= numberOfGuestsVal %>"
+                        value="${empty oldValues['numberOfGuests'] ? '1' : oldValues['numberOfGuests']}"
                         required
                     />
+                    <c:if test="${errors['numberOfGuests'] != null}">
+                        <div class="invalid-feedback">${errors['numberOfGuests']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-md-6">
                     <label for="checkInDate" class="form-label required">Check-in Date</label>
                     <input
                         type="date"
-                        class="form-control"
+                        class="form-control ${errors['checkInDate'] != null ? 'is-invalid' : ''}"
                         id="checkInDate"
                         name="checkInDate"
-                        value="<%= checkInDateVal %>"
+                        value="${oldValues['checkInDate']}"
                         required
                     />
+                    <c:if test="${errors['checkInDate'] != null}">
+                        <div class="invalid-feedback">${errors['checkInDate']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-md-6">
                     <label for="checkOutDate" class="form-label required">Check-out Date</label>
                     <input
                         type="date"
-                        class="form-control"
+                        class="form-control ${errors['checkOutDate'] != null ? 'is-invalid' : ''}"
                         id="checkOutDate"
                         name="checkOutDate"
-                        value="<%= checkOutDateVal %>"
+                        value="${oldValues['checkOutDate']}"
                         required
                     />
+                    <c:if test="${errors['checkOutDate'] != null}">
+                        <div class="invalid-feedback">${errors['checkOutDate']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-12">
@@ -184,15 +194,20 @@
                         class="form-control"
                         rows="4"
                         placeholder="Any preferences, arrival notes, accessibility needs, etc. (optional)"
-                    ><%= specialRequestsVal %></textarea>
+                    >${fn:escapeXml(oldValues['specialRequests'])}</textarea>
                 </div>
 
                 <div class="col-md-6">
                     <label for="reservationStatus" class="form-label required">Reservation Status</label>
-                    <select id="reservationStatus" name="reservationStatus" class="form-select" required>
-                        <option value="PENDING" <%= "PENDING".equalsIgnoreCase(reservationStatusVal) ? "selected" : "" %>>PENDING</option>
-                        <option value="CONFIRMED" <%= "CONFIRMED".equalsIgnoreCase(reservationStatusVal) ? "selected" : "" %>>CONFIRMED</option>
+                    <select id="reservationStatus" name="reservationStatus" class="form-select ${errors['reservationStatus'] != null ? 'is-invalid' : ''}" required>
+                        <option value="PENDING" ${empty oldValues['reservationStatus'] || oldValues['reservationStatus'] == 'PENDING' ? 'selected' : ''}>PENDING</option>
+                        <option value="CONFIRMED" ${oldValues['reservationStatus'] == 'CONFIRMED' ? 'selected' : ''}>CONFIRMED</option>
+                        <option value="CANCELLED" ${oldValues['reservationStatus'] == 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
+                        <option value="CHECKED_IN" ${oldValues['reservationStatus'] == 'CHECKED_IN' ? 'selected' : ''}>CHECKED_IN</option>
                     </select>
+                    <c:if test="${errors['reservationStatus'] != null}">
+                        <div class="invalid-feedback">${errors['reservationStatus']}</div>
+                    </c:if>
                 </div>
 
                 <div class="col-12">
@@ -256,7 +271,7 @@
         const totalEl = document.getElementById("billTotal");
         const validationEl = document.getElementById("billValidationMessage");
 
-        let initialRoomId = "<%= roomIdVal %>";
+        let initialRoomId = "${oldValues['roomId']}";
         let currentRate = null;
 
         function formatLkr(value) {
@@ -438,4 +453,3 @@
 </script>
 </body>
 </html>
-

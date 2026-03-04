@@ -2,6 +2,8 @@ package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.UserDAO;
 import com.icbt.oceanview.model.User;
+import com.icbt.oceanview.util.validation.ValidationResult;
+import com.icbt.oceanview.util.validation.ValidationUtil;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -10,8 +12,10 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -32,14 +36,14 @@ public class ManageStaffUsersServlet extends HttpServlet {
 
     UserDAO userDAO = new UserDAO();
 
-    String toggleId = trimParam(request, "toggleId");
-    if (!toggleId.isEmpty()) {
+    String toggleId = ValidationUtil.trimToNull(request.getParameter("toggleId"));
+    if (toggleId != null) {
       handleToggle(toggleId, userDAO, request, response);
       return;
     }
 
-    String deleteId = trimParam(request, "deleteId");
-    if (!deleteId.isEmpty()) {
+    String deleteId = ValidationUtil.trimToNull(request.getParameter("deleteId"));
+    if (deleteId != null) {
       handleDelete(deleteId, userDAO, request, response);
       return;
     }
@@ -58,43 +62,60 @@ public class ManageStaffUsersServlet extends HttpServlet {
 
     UserDAO userDAO = new UserDAO();
 
-    String name = trimParam(request, "name");
-    String email = trimParam(request, "email");
+    ValidationResult vr = new ValidationResult();
+    vr.getOldValues().put("name", request.getParameter("name") == null ? "" : request.getParameter("name"));
+    vr.getOldValues().put("email", request.getParameter("email") == null ? "" : request.getParameter("email"));
+    vr.getOldValues().put("role", request.getParameter("role") == null ? "" : request.getParameter("role"));
+    vr.getOldValues().put("active", String.valueOf(request.getParameter("active") != null));
+
+    String name = ValidationUtil.trimToNull(request.getParameter("name"));
+    String email = ValidationUtil.trimToNull(request.getParameter("email"));
     String password = request.getParameter("password");
-    String role = trimParam(request, "role").toUpperCase(Locale.ROOT);
+    String role = ValidationUtil.trimToNull(request.getParameter("role"));
     boolean active = request.getParameter("active") != null;
 
-    request.setAttribute("formName", name);
-    request.setAttribute("formEmail", email);
-    request.setAttribute("formRole", role);
-    request.setAttribute("formActive", active);
-
-    if (name.isEmpty() || email.isEmpty() || password == null || password.trim().isEmpty()) {
-      request.setAttribute("error", "Name, email, and password are required.");
-      loadAndForwardList(request, response, userDAO);
-      return;
+    if (ValidationUtil.isBlank(name)) {
+      vr.addError("name", "Full name is required.");
+    } else if (name.length() < 2 || name.length() > 100) {
+      vr.addError("name", "Full name must be between 2 and 100 characters.");
     }
 
-    if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-      request.setAttribute("error", "Please enter a valid email address.");
-      loadAndForwardList(request, response, userDAO);
-      return;
+    if (ValidationUtil.isBlank(email)) {
+      vr.addError("email", "Email is required.");
+    } else if (!ValidationUtil.isValidEmail(email)) {
+      vr.addError("email", "Please enter a valid email address.");
     }
 
-    if (password.length() < 8) {
-      request.setAttribute("error", "Password must be at least 8 characters.");
-      loadAndForwardList(request, response, userDAO);
-      return;
+    if (ValidationUtil.isBlank(password)) {
+      vr.addError("password", "Password is required.");
+    } else if (!ValidationUtil.isStrongPassword(password)) {
+      vr.addError("password", "Password must be at least 8 characters.");
     }
 
-    if (!"ADMIN".equals(role) && !"STAFF".equals(role)) {
-      request.setAttribute("error", "Invalid role selected.");
-      loadAndForwardList(request, response, userDAO);
-      return;
+    if (role == null) {
+      vr.addError("role", "Role is required.");
+    } else {
+      role = role.toUpperCase(Locale.ROOT);
+      vr.getOldValues().put("role", role);
+      Set<String> allowedRoles = new LinkedHashSet<String>() {
+        {
+          add("ADMIN");
+          add("STAFF");
+        }
+      };
+      if (!allowedRoles.contains(role)) {
+        vr.addError("role", "Invalid role selected.");
+      }
     }
 
-    if (userDAO.emailExists(email)) {
-      request.setAttribute("error", "Email already exists.");
+    if (vr.error("email") == null && email != null && userDAO.emailExists(email)) {
+      vr.addError("email", "This email is already registered.");
+    }
+
+    if (vr.hasErrors()) {
+      vr.addError("global", "Please fix the highlighted fields.");
+      request.setAttribute("errors", vr.getErrors());
+      request.setAttribute("oldValues", vr.getOldValues());
       loadAndForwardList(request, response, userDAO);
       return;
     }
@@ -103,7 +124,9 @@ public class ManageStaffUsersServlet extends HttpServlet {
     try {
       hashedPassword = hashPassword(password);
     } catch (SQLException e) {
-      request.setAttribute("error", "Failed to create user.");
+      vr.addError("global", "Failed to create user.");
+      request.setAttribute("errors", vr.getErrors());
+      request.setAttribute("oldValues", vr.getOldValues());
       loadAndForwardList(request, response, userDAO);
       return;
     }
@@ -111,24 +134,22 @@ public class ManageStaffUsersServlet extends HttpServlet {
     User user = User.newForRegistration(name, email, hashedPassword, role, active, LocalDateTime.now());
     boolean inserted = userDAO.insert(user);
     if (inserted) {
-      response.sendRedirect(
-          request.getContextPath() + "/admin/staff-users?success=" + encode("User created"));
+      response.sendRedirect(request.getContextPath() + "/admin/staff-users?success=" + encode("User created"));
       return;
     }
 
-    request.setAttribute("error", "Failed to create user.");
+    vr.addError("global", "Failed to create user.");
+    request.setAttribute("errors", vr.getErrors());
+    request.setAttribute("oldValues", vr.getOldValues());
     loadAndForwardList(request, response, userDAO);
   }
 
   private void handleToggle(
       String toggleId, UserDAO userDAO, HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    int id;
-    try {
-      id = Integer.parseInt(toggleId);
-    } catch (NumberFormatException e) {
-      response.sendRedirect(
-          request.getContextPath() + "/admin/staff-users?error=" + encode("Invalid user id"));
+    Integer id = ValidationUtil.parseIntSafe(toggleId);
+    if (!ValidationUtil.isPositiveInt(id)) {
+      response.sendRedirect(request.getContextPath() + "/admin/staff-users?error=" + encode("Invalid user id"));
       return;
     }
 
@@ -145,22 +166,17 @@ public class ManageStaffUsersServlet extends HttpServlet {
   private void handleDelete(
       String deleteId, UserDAO userDAO, HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    int id;
-    try {
-      id = Integer.parseInt(deleteId);
-    } catch (NumberFormatException e) {
-      response.sendRedirect(
-          request.getContextPath() + "/admin/staff-users?error=" + encode("Invalid user id"));
+    Integer id = ValidationUtil.parseIntSafe(deleteId);
+    if (!ValidationUtil.isPositiveInt(id)) {
+      response.sendRedirect(request.getContextPath() + "/admin/staff-users?error=" + encode("Invalid user id"));
       return;
     }
 
     boolean deleted = userDAO.deleteById(id);
     if (deleted) {
-      response.sendRedirect(
-          request.getContextPath() + "/admin/staff-users?success=" + encode("User deleted"));
+      response.sendRedirect(request.getContextPath() + "/admin/staff-users?success=" + encode("User deleted"));
     } else {
-      response.sendRedirect(
-          request.getContextPath() + "/admin/staff-users?error=" + encode("Failed to delete user"));
+      response.sendRedirect(request.getContextPath() + "/admin/staff-users?error=" + encode("Failed to delete user"));
     }
   }
 
@@ -192,12 +208,6 @@ public class ManageStaffUsersServlet extends HttpServlet {
     User user = (User) userObj;
     String role = user.getRole();
     return role != null && "ADMIN".equalsIgnoreCase(role);
-  }
-
-
-  private String trimParam(HttpServletRequest request, String name) {
-    String value = request.getParameter(name);
-    return value == null ? "" : value.trim();
   }
 
   private String encode(String value) {

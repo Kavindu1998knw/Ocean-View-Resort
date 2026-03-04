@@ -1,5 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,29 +43,42 @@
         </div>
         <div class="card-body p-4">
             <form method="post" action="${pageContext.request.contextPath}/admin/staff-users">
+                <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label for="name" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="name" name="name" value="${formName}" required>
+                        <input type="text" class="form-control ${errors['name'] != null ? 'is-invalid' : ''}" id="name" name="name" value="${fn:escapeXml(oldValues['name'])}" required>
+                        <c:if test="${errors['name'] != null}">
+                            <div class="invalid-feedback">${errors['name']}</div>
+                        </c:if>
                     </div>
                     <div class="col-md-6">
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" value="${formEmail}" required>
+                        <input type="email" class="form-control ${errors['email'] != null ? 'is-invalid' : ''}" id="email" name="email" value="${fn:escapeXml(oldValues['email'])}" required>
+                        <c:if test="${errors['email'] != null}">
+                            <div class="invalid-feedback">${errors['email']}</div>
+                        </c:if>
                     </div>
                     <div class="col-md-6">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" minlength="8" required>
+                        <input type="password" class="form-control ${errors['password'] != null ? 'is-invalid' : ''}" id="password" name="password" minlength="8" required>
+                        <c:if test="${errors['password'] != null}">
+                            <div class="invalid-feedback">${errors['password']}</div>
+                        </c:if>
                     </div>
                     <div class="col-md-3">
                         <label for="role" class="form-label">Role</label>
-                        <select id="role" name="role" class="form-select" required>
-                            <option value="ADMIN" ${formRole == 'ADMIN' ? 'selected' : ''}>ADMIN</option>
-                            <option value="STAFF" ${formRole == 'STAFF' ? 'selected' : ''}>STAFF</option>
+                        <select id="role" name="role" class="form-select ${errors['role'] != null ? 'is-invalid' : ''}" required>
+                            <option value="ADMIN" ${oldValues['role'] == 'ADMIN' ? 'selected' : ''}>ADMIN</option>
+                            <option value="STAFF" ${empty oldValues['role'] || oldValues['role'] == 'STAFF' ? 'selected' : ''}>STAFF</option>
                         </select>
+                        <c:if test="${errors['role'] != null}">
+                            <div class="invalid-feedback">${errors['role']}</div>
+                        </c:if>
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="active" name="active" ${formActive == null || formActive ? 'checked' : ''}>
+                            <input class="form-check-input" type="checkbox" id="active" name="active" ${empty oldValues['active'] || oldValues['active'] == 'true' ? 'checked' : ''}>
                             <label class="form-check-label" for="active">Active</label>
                         </div>
                     </div>
@@ -143,4 +157,3 @@
 </div>
 </body>
 </html>
-

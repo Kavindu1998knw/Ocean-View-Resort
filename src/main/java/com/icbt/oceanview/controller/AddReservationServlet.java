@@ -5,12 +5,17 @@ import com.icbt.oceanview.dao.RoomManagementDAO;
 import com.icbt.oceanview.model.Reservation;
 import com.icbt.oceanview.model.RoomInfo;
 import com.icbt.oceanview.util.RoomTypes;
+import com.icbt.oceanview.util.validation.RequestUtil;
+import com.icbt.oceanview.util.validation.ValidationResult;
+import com.icbt.oceanview.util.validation.ValidationUtil;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
+import java.util.LinkedHashSet;
 import java.util.Locale;
-import java.util.regex.Pattern;
+import java.util.Set;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -19,8 +24,15 @@ import javax.servlet.http.HttpServletResponse;
 
 @WebServlet("/reservations/add")
 public class AddReservationServlet extends HttpServlet {
-  private static final Pattern EMAIL_PATTERN =
-      Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+  private static final Set<String> ALLOWED_STATUSES =
+      new LinkedHashSet<String>() {
+        {
+          add("PENDING");
+          add("CONFIRMED");
+          add("CANCELLED");
+          add("CHECKED_IN");
+        }
+      };
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -29,6 +41,16 @@ public class AddReservationServlet extends HttpServlet {
     if (role == null) {
       return;
     }
+
+    String success = ValidationUtil.trimToNull(request.getParameter("success"));
+    String reservationNo = ValidationUtil.trimToNull(request.getParameter("reservationNo"));
+    if (success != null) {
+      request.setAttribute("success", success);
+    }
+    if (reservationNo != null) {
+      request.setAttribute("reservationNo", reservationNo);
+    }
+
     setRoomTypes(request);
     request.getRequestDispatcher(resolveView(role)).forward(request, response);
   }
@@ -42,127 +64,124 @@ public class AddReservationServlet extends HttpServlet {
       return;
     }
 
-    String guestFullName = trimParam(request, "guestFullName");
-    String guestEmail = trimParam(request, "guestEmail");
-    String contactNumber = trimParam(request, "contactNumber");
-    String roomType = trimParam(request, "roomType");
-    String roomIdRaw = trimParam(request, "roomId");
-    String numberOfGuestsRaw = trimParam(request, "numberOfGuests");
-    String checkInDateRaw = trimParam(request, "checkInDate");
-    String checkOutDateRaw = trimParam(request, "checkOutDate");
-    String specialRequests = trimParam(request, "specialRequests");
-    String status = trimParam(request, "status");
-    if (status.isEmpty()) {
-      status = trimParam(request, "reservationStatus");
-    }
-
-    preserveFormValues(
+    ValidationResult vr = new ValidationResult();
+    RequestUtil.collectOldValues(
         request,
-        guestFullName,
-        guestEmail,
-        contactNumber,
-        roomType,
-        roomIdRaw,
-        numberOfGuestsRaw,
-        checkInDateRaw,
-        checkOutDateRaw,
-        specialRequests,
-        status);
+        vr,
+        "guestFullName",
+        "guestEmail",
+        "contactNumber",
+        "roomType",
+        "roomId",
+        "numberOfGuests",
+        "checkInDate",
+        "checkOutDate",
+        "specialRequests",
+        "reservationStatus");
 
-    if (isBlank(guestFullName)
-        || isBlank(guestEmail)
-        || isBlank(contactNumber)
-        || isBlank(roomType)
-        || isBlank(roomIdRaw)
-        || isBlank(numberOfGuestsRaw)
-        || isBlank(checkInDateRaw)
-        || isBlank(checkOutDateRaw)) {
-      forwardWithError(request, response, "Please fill all required fields.", role);
-      return;
-    }
+    String guestFullName = ValidationUtil.trimToNull(request.getParameter("guestFullName"));
+    String guestEmail = ValidationUtil.trimToNull(request.getParameter("guestEmail"));
+    String contactNumber = ValidationUtil.trimToNull(request.getParameter("contactNumber"));
+    String roomType = ValidationUtil.trimToNull(request.getParameter("roomType"));
+    Integer roomId = ValidationUtil.parseIntSafe(request.getParameter("roomId"));
+    Integer numberOfGuests = ValidationUtil.parseIntSafe(request.getParameter("numberOfGuests"));
+    LocalDate checkInDate = ValidationUtil.parseDateSafe(request.getParameter("checkInDate"));
+    LocalDate checkOutDate = ValidationUtil.parseDateSafe(request.getParameter("checkOutDate"));
+    String specialRequests = ValidationUtil.trimToNull(request.getParameter("specialRequests"));
 
-    if (!EMAIL_PATTERN.matcher(guestEmail).matches()) {
-      forwardWithError(request, response, "Please enter a valid email address.", role);
-      return;
+    String status = ValidationUtil.trimToNull(request.getParameter("status"));
+    if (status == null) {
+      status = ValidationUtil.trimToNull(request.getParameter("reservationStatus"));
     }
-
-    int numberOfGuests;
-    try {
-      numberOfGuests = Integer.parseInt(numberOfGuestsRaw);
-    } catch (NumberFormatException e) {
-      forwardWithError(request, response, "Number of guests must be a valid number.", role);
-      return;
-    }
-    if (numberOfGuests < 1) {
-      forwardWithError(request, response, "Number of guests must be at least 1.", role);
-      return;
+    if (status != null) {
+      status = status.toUpperCase(Locale.ROOT);
+      vr.getOldValues().put("reservationStatus", status);
     }
 
-    int roomId;
-    try {
-      roomId = Integer.parseInt(roomIdRaw);
-    } catch (NumberFormatException e) {
-      forwardWithError(request, response, "Please select a valid room.", role);
-      return;
-    }
-    if (roomId <= 0) {
-      forwardWithError(request, response, "Please select a valid room.", role);
-      return;
+    if (ValidationUtil.isBlank(guestFullName)) {
+      vr.addError("guestFullName", "Guest full name is required.");
+    } else if (guestFullName.length() < 2 || guestFullName.length() > 120) {
+      vr.addError("guestFullName", "Guest full name must be between 2 and 120 characters.");
     }
 
-    LocalDate checkInDate;
-    LocalDate checkOutDate;
-    try {
-      checkInDate = LocalDate.parse(checkInDateRaw);
-      checkOutDate = LocalDate.parse(checkOutDateRaw);
-    } catch (DateTimeParseException e) {
-      forwardWithError(
-          request, response, "Please enter valid check-in and check-out dates.", role);
-      return;
+    if (ValidationUtil.isBlank(guestEmail)) {
+      vr.addError("guestEmail", "Guest email is required.");
+    } else if (!ValidationUtil.isValidEmail(guestEmail)) {
+      vr.addError("guestEmail", "Enter a valid guest email address.");
     }
 
-    if (!checkInDate.isBefore(checkOutDate)) {
-      forwardWithError(
-          request, response, "Check-in date must be earlier than check-out date.", role);
-      return;
+    if (ValidationUtil.isBlank(contactNumber)) {
+      vr.addError("contactNumber", "Contact number is required.");
+    } else if (!ValidationUtil.isValidSriLankaMobile(contactNumber)
+        && !ValidationUtil.isValidPhone10(contactNumber.replaceAll("[^0-9]", ""))) {
+      vr.addError("contactNumber", "Enter a valid contact number.");
     }
 
-    if (!isBlank(status)) {
-      String normalizedStatus = status.toUpperCase(Locale.ROOT);
-      if (!"PENDING".equals(normalizedStatus)
-          && !"CONFIRMED".equals(normalizedStatus)
-          && !"CANCELLED".equals(normalizedStatus)) {
-        forwardWithError(request, response, "Invalid reservation status.", role);
-        return;
-      }
-      status = normalizedStatus;
+    Set<String> allowedRoomTypes = new LinkedHashSet<>(RoomTypes.getRoomTypes());
+    if (ValidationUtil.isBlank(roomType)) {
+      vr.addError("roomType", "Room type is required.");
+    } else if (!ValidationUtil.isInAllowedSet(roomType, allowedRoomTypes)) {
+      vr.addError("roomType", "Invalid room type selected.");
+    }
+
+    if (!ValidationUtil.isPositiveInt(roomId)) {
+      vr.addError("roomId", "Please select a valid room.");
+    }
+
+    if (!ValidationUtil.isPositiveInt(numberOfGuests)) {
+      vr.addError("numberOfGuests", "Number of guests must be at least 1.");
+    }
+
+    if (checkInDate == null) {
+      vr.addError("checkInDate", "Check-in date is required.");
+    }
+
+    if (checkOutDate == null) {
+      vr.addError("checkOutDate", "Check-out date is required.");
+    }
+
+    if (checkInDate != null
+        && checkOutDate != null
+        && !ValidationUtil.isDateOrderValid(checkInDate, checkOutDate)) {
+      vr.addError("checkOutDate", "Check-out date must be later than check-in date.");
+    }
+
+    if (ValidationUtil.isBlank(status)) {
+      vr.addError("reservationStatus", "Reservation status is required.");
+    } else if (!ValidationUtil.isInAllowedSet(status, ALLOWED_STATUSES)) {
+      vr.addError("reservationStatus", "Invalid reservation status.");
     }
 
     RoomManagementDAO roomDAO = new RoomManagementDAO();
-    RoomInfo selectedRoom = roomDAO.findById(roomId);
-    if (selectedRoom == null
-        || !selectedRoom.isActive()
-        || !roomType.equals(selectedRoom.getRoomType())) {
-      forwardWithError(request, response, "Please select a valid room.", role);
-      return;
+    if (vr.error("roomId") == null && vr.error("roomType") == null) {
+      RoomInfo selectedRoom = roomDAO.findById(roomId);
+      if (selectedRoom == null
+          || !selectedRoom.isActive()
+          || !roomType.equals(selectedRoom.getRoomType())) {
+        vr.addError("roomId", "Selected room is invalid for the chosen room type.");
+      }
     }
 
     ReservationDAO reservationDAO = new ReservationDAO();
-    if (reservationDAO.hasOverlappingReservationForRoom(roomId, checkInDate, checkOutDate)) {
-      forwardWithError(
-          request,
-          response,
-          "This room is already reserved for the selected dates.",
-          role);
+    if (vr.error("roomId") == null
+        && vr.error("checkInDate") == null
+        && vr.error("checkOutDate") == null
+        && reservationDAO.hasOverlappingReservationForRoom(roomId, checkInDate, checkOutDate)) {
+      vr.addError("roomId", "Room is not available for selected dates.");
+    }
+
+    if (vr.hasErrors()) {
+      vr.addError("global", "Please fix the highlighted fields.");
+      setRoomTypes(request);
+      RequestUtil.forwardWithErrors(request, response, resolveView(role), vr);
       return;
     }
+
     String reservationNo = reservationDAO.generateReservationNo();
     if (reservationNo == null) {
-      forwardWithError(
-          request,
-          response,
-          "Unable to generate reservation number. Please try again.",
-          role);
+      vr.addError("global", "Unable to generate reservation number. Please try again.");
+      setRoomTypes(request);
+      RequestUtil.forwardWithErrors(request, response, resolveView(role), vr);
       return;
     }
 
@@ -183,46 +202,18 @@ public class AddReservationServlet extends HttpServlet {
 
     boolean saved = reservationDAO.insert(reservation);
     if (saved) {
-      request.setAttribute("success", "Reservation created successfully.");
-      request.setAttribute("reservationNo", reservationNo);
-    } else {
-      request.setAttribute("error", "Failed to create reservation. Please try again.");
+      response.sendRedirect(
+          request.getContextPath()
+              + "/reservations/add?success="
+              + encode("Reservation created successfully.")
+              + "&reservationNo="
+              + encode(reservationNo));
+      return;
     }
 
+    vr.addError("global", "Failed to create reservation. Please try again.");
     setRoomTypes(request);
-    request.getRequestDispatcher(resolveView(role)).forward(request, response);
-  }
-
-  private void preserveFormValues(
-      HttpServletRequest request,
-      String guestFullName,
-      String guestEmail,
-      String contactNumber,
-      String roomType,
-      String roomId,
-      String numberOfGuests,
-      String checkInDate,
-      String checkOutDate,
-      String specialRequests,
-      String status) {
-    request.setAttribute("guestFullName", guestFullName);
-    request.setAttribute("guestEmail", guestEmail);
-    request.setAttribute("contactNumber", contactNumber);
-    request.setAttribute("roomType", roomType);
-    request.setAttribute("roomId", roomId);
-    request.setAttribute("numberOfGuests", numberOfGuests);
-    request.setAttribute("checkInDate", checkInDate);
-    request.setAttribute("checkOutDate", checkOutDate);
-    request.setAttribute("specialRequests", specialRequests);
-    request.setAttribute("reservationStatus", status);
-  }
-
-  private void forwardWithError(
-      HttpServletRequest request, HttpServletResponse response, String message, String role)
-      throws ServletException, IOException {
-    request.setAttribute("error", message);
-    setRoomTypes(request);
-    request.getRequestDispatcher(resolveView(role)).forward(request, response);
+    RequestUtil.forwardWithErrors(request, response, resolveView(role), vr);
   }
 
   private String resolveView(String role) {
@@ -233,15 +224,17 @@ public class AddReservationServlet extends HttpServlet {
   }
 
   private void setRoomTypes(HttpServletRequest request) {
-    request.setAttribute("roomTypes", RoomTypes.ROOM_TYPES);
+    request.setAttribute("roomTypes", RoomTypes.getRoomTypes());
   }
 
-  private String trimParam(HttpServletRequest request, String name) {
-    String value = request.getParameter(name);
-    return value == null ? "" : value.trim();
-  }
-
-  private boolean isBlank(String value) {
-    return value == null || value.trim().isEmpty();
+  private String encode(String value) {
+    if (value == null) {
+      return "";
+    }
+    try {
+      return URLEncoder.encode(value, StandardCharsets.UTF_8.name());
+    } catch (java.io.UnsupportedEncodingException e) {
+      return "";
+    }
   }
 }

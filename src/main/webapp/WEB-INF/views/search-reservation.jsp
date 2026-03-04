@@ -1,5 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,27 +33,24 @@
         </div>
     </div>
 
-    <c:if test="${not empty success}">
-        <div class="alert alert-success" role="alert">${success}</div>
-    </c:if>
-    <c:if test="${not empty error}">
-        <div class="alert alert-danger" role="alert">${error}</div>
-    </c:if>
-
-    <form method="get" action="${pageContext.request.contextPath}/reservations/search" class="card card-soft mb-4">
+    <form method="post" action="${pageContext.request.contextPath}/reservations/search" class="card card-soft mb-4">
         <div class="card-body p-4">
+            <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
             <div class="row g-3 align-items-end">
                 <div class="col-md-9">
                     <label for="reservationNo" class="form-label">Reservation Number</label>
                     <input
                         type="text"
-                        class="form-control"
+                        class="form-control ${errors['reservationNo'] != null ? 'is-invalid' : ''}"
                         id="reservationNo"
                         name="reservationNo"
                         placeholder="e.g., RES-20260212-9133"
-                        value="${param.reservationNo}"
+                        value="${fn:escapeXml(empty oldValues['reservationNo'] ? param.reservationNo : oldValues['reservationNo'])}"
                         required
                     >
+                    <c:if test="${errors['reservationNo'] != null}">
+                        <div class="invalid-feedback">${errors['reservationNo']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-3 d-grid">
                     <button type="submit" class="btn btn-primary">Search</button>
@@ -143,9 +141,6 @@
     </c:if>
         </div>
     </main>
-        </div>
-    </main>
 </div>
 </body>
 </html>
-

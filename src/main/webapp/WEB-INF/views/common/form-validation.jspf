@@ -1,0 +1,15 @@
+﻿<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<c:if test="${errors['global'] != null}">
+    <div class="form-alert" role="alert">${errors['global']}</div>
+</c:if>
+
+<%--
+Usage pattern for each field:
+- Input class: ${errors['fieldName'] != null ? 'is-invalid' : ''}
+- Value refill: ${oldValues['fieldName']}
+- Message:
+<c:if test="${errors['fieldName'] != null}">
+    <div class="invalid-feedback">${errors['fieldName']}</div>
+</c:if>
+--%>

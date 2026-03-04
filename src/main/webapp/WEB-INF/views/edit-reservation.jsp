@@ -1,5 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,13 +30,10 @@
         <a class="btn btn-outline-secondary" href="${pageContext.request.contextPath}/reservations">Back to Reservations</a>
     </div>
 
-    <c:if test="${not empty error}">
-        <div class="alert alert-danger" role="alert">${error}</div>
-    </c:if>
-
     <form method="post" action="${pageContext.request.contextPath}/reservations/update" class="card card-soft">
         <div class="card-body p-4">
-            <input type="hidden" name="id" value="${reservation.id}">
+            <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
+            <input type="hidden" name="id" value="${oldValues['id']}">
 
             <div class="row g-3">
                 <div class="col-md-4">
@@ -45,7 +43,7 @@
                         class="form-control"
                         id="reservationNo"
                         name="reservationNo"
-                        value="${reservation.reservationNo}"
+                        value="${fn:escapeXml(oldValues['reservationNo'])}"
                         readonly
                     >
                 </div>
@@ -53,91 +51,120 @@
                     <label for="guestFullName" class="form-label">Guest Full Name</label>
                     <input
                         type="text"
-                        class="form-control"
+                        class="form-control ${errors['guestFullName'] != null ? 'is-invalid' : ''}"
                         id="guestFullName"
                         name="guestFullName"
-                        value="${reservation.guestFullName}"
+                        value="${fn:escapeXml(oldValues['guestFullName'])}"
                         required
                     >
+                    <c:if test="${errors['guestFullName'] != null}">
+                        <div class="invalid-feedback">${errors['guestFullName']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-4">
                     <label for="guestEmail" class="form-label">Guest Email</label>
                     <input
                         type="email"
-                        class="form-control"
+                        class="form-control ${errors['guestEmail'] != null ? 'is-invalid' : ''}"
                         id="guestEmail"
                         name="guestEmail"
-                        value="${reservation.guestEmail}"
+                        value="${fn:escapeXml(oldValues['guestEmail'])}"
                         required
                     >
+                    <c:if test="${errors['guestEmail'] != null}">
+                        <div class="invalid-feedback">${errors['guestEmail']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-4">
                     <label for="contactNumber" class="form-label">Contact Number</label>
                     <input
                         type="text"
-                        class="form-control"
+                        class="form-control ${errors['contactNumber'] != null ? 'is-invalid' : ''}"
                         id="contactNumber"
                         name="contactNumber"
-                        value="${reservation.contactNumber}"
+                        value="${fn:escapeXml(oldValues['contactNumber'])}"
                         required
                     >
+                    <c:if test="${errors['contactNumber'] != null}">
+                        <div class="invalid-feedback">${errors['contactNumber']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-4">
                     <label for="roomType" class="form-label">Room Type</label>
-                    <select class="form-select" id="roomType" name="roomType" required>
+                    <select class="form-select ${errors['roomType'] != null ? 'is-invalid' : ''}" id="roomType" name="roomType" required>
+                        <option value="" ${empty oldValues['roomType'] ? 'selected' : ''} disabled>Select room type</option>
                         <c:forEach var="type" items="${roomTypes}">
-                            <option value="${type}" ${type == reservation.roomType ? 'selected' : ''}>${type}</option>
+                            <option value="${type}" ${type == oldValues['roomType'] ? 'selected' : ''}>${type}</option>
                         </c:forEach>
                     </select>
+                    <c:if test="${errors['roomType'] != null}">
+                        <div class="invalid-feedback">${errors['roomType']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-4">
                     <label for="roomId" class="form-label">Room (Room No)</label>
-                    <select class="form-select" id="roomId" name="roomId" required>
+                    <select class="form-select ${errors['roomId'] != null ? 'is-invalid' : ''}" id="roomId" name="roomId" required>
                         <option value="" selected disabled>Select room</option>
                     </select>
                     <div id="roomIdHelp" class="form-text text-muted d-none">No active rooms available for this room type.</div>
+                    <c:if test="${errors['roomId'] != null}">
+                        <div class="invalid-feedback">${errors['roomId']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-4">
                     <label for="numberOfGuests" class="form-label">Number of Guests</label>
                     <input
                         type="number"
-                        class="form-control"
+                        class="form-control ${errors['numberOfGuests'] != null ? 'is-invalid' : ''}"
                         id="numberOfGuests"
                         name="numberOfGuests"
-                        value="${reservation.numberOfGuests}"
+                        value="${oldValues['numberOfGuests']}"
                         min="1"
                         required
                     >
+                    <c:if test="${errors['numberOfGuests'] != null}">
+                        <div class="invalid-feedback">${errors['numberOfGuests']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-4">
                     <label for="checkInDate" class="form-label">Check-in Date</label>
                     <input
                         type="date"
-                        class="form-control"
+                        class="form-control ${errors['checkInDate'] != null ? 'is-invalid' : ''}"
                         id="checkInDate"
                         name="checkInDate"
-                        value="${reservation.checkInDate}"
+                        value="${oldValues['checkInDate']}"
                         required
                     >
+                    <c:if test="${errors['checkInDate'] != null}">
+                        <div class="invalid-feedback">${errors['checkInDate']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-4">
                     <label for="checkOutDate" class="form-label">Check-out Date</label>
                     <input
                         type="date"
-                        class="form-control"
+                        class="form-control ${errors['checkOutDate'] != null ? 'is-invalid' : ''}"
                         id="checkOutDate"
                         name="checkOutDate"
-                        value="${reservation.checkOutDate}"
+                        value="${oldValues['checkOutDate']}"
                         required
                     >
+                    <c:if test="${errors['checkOutDate'] != null}">
+                        <div class="invalid-feedback">${errors['checkOutDate']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-4">
                     <label for="status" class="form-label">Status</label>
-                    <select class="form-select" id="status" name="status" required>
-                        <option value="PENDING" <c:if test="${reservation.status == 'PENDING'}">selected</c:if>>PENDING</option>
-                        <option value="CONFIRMED" <c:if test="${reservation.status == 'CONFIRMED'}">selected</c:if>>CONFIRMED</option>
-                        <option value="CANCELLED" <c:if test="${reservation.status == 'CANCELLED'}">selected</c:if>>CANCELLED</option>
+                    <select class="form-select ${errors['status'] != null ? 'is-invalid' : ''}" id="status" name="status" required>
+                        <option value="PENDING" ${empty oldValues['status'] || oldValues['status'] == 'PENDING' ? 'selected' : ''}>PENDING</option>
+                        <option value="CONFIRMED" ${oldValues['status'] == 'CONFIRMED' ? 'selected' : ''}>CONFIRMED</option>
+                        <option value="CANCELLED" ${oldValues['status'] == 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
+                        <option value="CHECKED_IN" ${oldValues['status'] == 'CHECKED_IN' ? 'selected' : ''}>CHECKED_IN</option>
                     </select>
+                    <c:if test="${errors['status'] != null}">
+                        <div class="invalid-feedback">${errors['status']}</div>
+                    </c:if>
                 </div>
                 <div class="col-12">
                     <label for="specialRequests" class="form-label">Special Requests</label>
@@ -146,7 +173,7 @@
                         id="specialRequests"
                         name="specialRequests"
                         rows="3"
-                    >${reservation.specialRequests}</textarea>
+                    >${fn:escapeXml(oldValues['specialRequests'])}</textarea>
                 </div>
             </div>
         </div>
@@ -164,7 +191,7 @@
         const roomTypeEl = document.getElementById("roomType");
         const roomIdEl = document.getElementById("roomId");
         const roomIdHelpEl = document.getElementById("roomIdHelp");
-        let initialRoomId = "${reservation.roomId}";
+        let initialRoomId = "${oldValues['roomId']}";
 
         function setRoomSelectState(enabled, message) {
             roomIdEl.disabled = !enabled;
@@ -242,4 +269,3 @@
 </script>
 </body>
 </html>
-

@@ -2,9 +2,14 @@ package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.ReservationDAO;
 import com.icbt.oceanview.model.Reservation;
+import com.icbt.oceanview.util.validation.RequestUtil;
+import com.icbt.oceanview.util.validation.ValidationResult;
+import com.icbt.oceanview.util.validation.ValidationUtil;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -22,17 +27,25 @@ public class SearchReservationServlet extends HttpServlet {
       return;
     }
 
-    String reservationNo = request.getParameter("reservationNo");
-    if (reservationNo == null || reservationNo.trim().isEmpty()) {
+    String reservationNo = ValidationUtil.trimToNull(request.getParameter("reservationNo"));
+    if (reservationNo == null) {
       request.getRequestDispatcher(resolveView(role)).forward(request, response);
       return;
     }
 
     ReservationDAO reservationDAO = new ReservationDAO();
-    Reservation reservation = reservationDAO.findByReservationNo(reservationNo.trim());
+    Reservation reservation = reservationDAO.findByReservationNo(reservationNo);
+
+    Map<String, String> oldValues = new LinkedHashMap<>();
+    oldValues.put("reservationNo", reservationNo);
+    request.setAttribute("oldValues", oldValues);
+
     if (reservation != null) {
       request.setAttribute("reservation", reservation);
     } else {
+      Map<String, String> errors = new LinkedHashMap<>();
+      errors.put("reservationNo", "Reservation not found.");
+      request.setAttribute("errors", errors);
       request.setAttribute("notFound", true);
     }
 
@@ -47,15 +60,28 @@ public class SearchReservationServlet extends HttpServlet {
       return;
     }
 
-    String reservationNo = request.getParameter("reservationNo");
-    if (reservationNo == null || reservationNo.trim().isEmpty()) {
-      response.sendRedirect(request.getContextPath() + "/reservations/search");
+    ValidationResult vr = new ValidationResult();
+    RequestUtil.collectOldValues(request, vr, "reservationNo");
+
+    String reservationNo = ValidationUtil.trimToNull(request.getParameter("reservationNo"));
+    if (reservationNo == null) {
+      vr.addError("reservationNo", "Reservation number is required.");
+    }
+
+    ReservationDAO reservationDAO = new ReservationDAO();
+    if (vr.error("reservationNo") == null && reservationDAO.findByReservationNo(reservationNo) == null) {
+      vr.addError("reservationNo", "Reservation not found.");
+    }
+
+    if (vr.hasErrors()) {
+      vr.addError("global", "Please fix the highlighted fields.");
+      request.setAttribute("notFound", "Reservation not found.".equals(vr.error("reservationNo")));
+      RequestUtil.forwardWithErrors(request, response, resolveView(role), vr);
       return;
     }
 
-    String encoded = URLEncoder.encode(reservationNo.trim(), StandardCharsets.UTF_8.name());
-    response.sendRedirect(
-        request.getContextPath() + "/reservations/search?reservationNo=" + encoded);
+    String encoded = URLEncoder.encode(reservationNo, StandardCharsets.UTF_8.name());
+    response.sendRedirect(request.getContextPath() + "/reservations/search?reservationNo=" + encoded);
   }
 
   private String resolveView(String role) {

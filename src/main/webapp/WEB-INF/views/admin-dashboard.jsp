@@ -133,15 +133,20 @@
             <div class="col-12 col-xl-4">
                 <div id="searchReservation" class="search-card mb-4">
                     <h5 class="mb-3">Search Reservation</h5>
-                    <form class="d-flex flex-column gap-2" action="${pageContext.request.contextPath}/reservations/search" method="get">
+                    <form class="d-flex flex-column gap-2" action="${pageContext.request.contextPath}/reservations/search" method="post">
+                        <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
                         <label for="reservationNo" class="form-label">Reservation Number</label>
                         <input
                             type="text"
-                            class="form-control"
+                            class="form-control ${errors['reservationNo'] != null ? 'is-invalid' : ''}"
                             id="reservationNo"
                             name="reservationNo"
                             placeholder="e.g., RSV-10234"
+                            value="${oldValues['reservationNo']}"
                         />
+                        <c:if test="${errors['reservationNo'] != null}">
+                            <div class="invalid-feedback">${errors['reservationNo']}</div>
+                        </c:if>
                         <button class="btn btn-primary mt-2" type="submit">Search</button>
                     </form>
                 </div>

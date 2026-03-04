@@ -2,7 +2,12 @@ package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.UserDAO;
 import com.icbt.oceanview.model.User;
+import com.icbt.oceanview.util.validation.RequestUtil;
+import com.icbt.oceanview.util.validation.ValidationResult;
+import com.icbt.oceanview.util.validation.ValidationUtil;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -15,9 +20,11 @@ public class LoginServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String errorParam = request.getParameter("error");
-    if (errorParam != null && !errorParam.trim().isEmpty()) {
-      request.setAttribute("error", errorParam);
+    String errorParam = ValidationUtil.trimToNull(request.getParameter("error"));
+    if (errorParam != null) {
+      Map<String, String> errors = new LinkedHashMap<>();
+      errors.put("global", errorParam);
+      request.setAttribute("errors", errors);
     }
     request.getRequestDispatcher("login.jsp").forward(request, response);
   }
@@ -27,20 +34,33 @@ public class LoginServlet extends HttpServlet {
       throws ServletException, IOException {
     request.setCharacterEncoding("UTF-8");
 
-    String email = trimParam(request, "email");
+    ValidationResult vr = new ValidationResult();
+    RequestUtil.collectOldValues(request, vr, "email");
+
+    String email = ValidationUtil.trimToNull(request.getParameter("email"));
     String password = request.getParameter("password");
 
-    if (isBlank(email) || isBlank(password)) {
-      request.setAttribute("error", "Email and password are required.");
-      request.getRequestDispatcher("login.jsp").forward(request, response);
+    if (ValidationUtil.isBlank(email)) {
+      vr.addError("email", "Email is required.");
+    } else if (!ValidationUtil.isValidEmail(email)) {
+      vr.addError("email", "Enter a valid email address.");
+    }
+
+    if (ValidationUtil.isBlank(password)) {
+      vr.addError("password", "Password is required.");
+    }
+
+    if (vr.hasErrors()) {
+      vr.addError("global", "Please fix the highlighted fields.");
+      RequestUtil.forwardWithErrors(request, response, "/login.jsp", vr);
       return;
     }
 
     UserDAO userDAO = new UserDAO();
     User user = userDAO.authenticate(email, password);
     if (user == null) {
-      request.setAttribute("error", "Invalid email or password.");
-      request.getRequestDispatcher("login.jsp").forward(request, response);
+      vr.addError("global", "Invalid email or password.");
+      RequestUtil.forwardWithErrors(request, response, "/login.jsp", vr);
       return;
     }
 
@@ -56,14 +76,5 @@ public class LoginServlet extends HttpServlet {
     }
 
     response.sendRedirect(request.getContextPath() + "/login?error=Invalid+role");
-  }
-
-  private String trimParam(HttpServletRequest request, String name) {
-    String value = request.getParameter(name);
-    return value == null ? "" : value.trim();
-  }
-
-  private boolean isBlank(String value) {
-    return value == null || value.trim().isEmpty();
   }
 }

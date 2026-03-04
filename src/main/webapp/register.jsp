@@ -1,28 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.util.List,java.util.Map" %>
-<%!
-  private String esc(String value) {
-    if (value == null) {
-      return "";
-    }
-    return value
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&quot;");
-  }
-%>
-<%
-  List<String> errors = (List<String>) request.getAttribute("errors");
-  Map<String, String> fieldErrors = (Map<String, String>) request.getAttribute("fieldErrors");
-  if (fieldErrors == null) {
-    fieldErrors = new java.util.HashMap<>();
-  }
-  String fullNameVal = (String) request.getAttribute("fullName");
-  String usernameVal = (String) request.getAttribute("username");
-  String emailVal = (String) request.getAttribute("email");
-  String contactVal = (String) request.getAttribute("contact");
-%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -35,6 +13,7 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/validation.css" />
     <style>
       :root {
         color-scheme: light;
@@ -47,9 +26,6 @@
         --border: #e5e7eb;
         --shadow: 0 20px 40px rgba(31, 41, 55, 0.12);
         --radius: 14px;
-        --error: #dc2626;
-        --error-bg: #fee2e2;
-        --error-border: #fecaca;
       }
 
       * {
@@ -167,29 +143,6 @@
         color: var(--primary);
       }
 
-      .alert {
-        padding: 12px 14px;
-        border-radius: 10px;
-        font-size: 13px;
-        border: 1px solid transparent;
-      }
-
-      .alert-danger {
-        background: var(--error-bg);
-        color: var(--error);
-        border-color: var(--error-border);
-      }
-
-      #errorBox {
-        display: none;
-      }
-
-      .input.is-invalid,
-      select.is-invalid {
-        border-color: var(--error);
-        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.12);
-      }
-
       .actions {
         display: grid;
         gap: 10px;
@@ -255,40 +208,39 @@
         <p class="subtitle">Staff Registration</p>
       </div>
 
-      <form id="registerForm" action="register" method="post" novalidate>
-        <%
-          if (errors != null && !errors.isEmpty()) {
-        %>
-        <div class="alert alert-danger" role="alert">
-          <%= esc(errors.get(0)) %>
-        </div>
-        <%
-          }
-        %>
+      <form id="registerForm" action="${pageContext.request.contextPath}/register" method="post" novalidate>
+        <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
+
         <div class="row">
           <div>
             <label for="fullName">Full Name</label>
             <input
-              class="input <%= fieldErrors.containsKey("fullName") ? "is-invalid" : "" %>"
+              class="input ${errors['fullName'] != null ? 'is-invalid' : ''}"
               id="fullName"
               name="fullName"
               type="text"
               placeholder="Jane Doe"
-              value="<%= esc(fullNameVal) %>"
+              value="${fn:escapeXml(oldValues['fullName'])}"
               required
             />
+            <c:if test="${errors['fullName'] != null}">
+              <div class="invalid-feedback">${errors['fullName']}</div>
+            </c:if>
           </div>
           <div>
             <label for="username">Username</label>
             <input
-              class="input <%= fieldErrors.containsKey("username") ? "is-invalid" : "" %>"
+              class="input ${errors['username'] != null ? 'is-invalid' : ''}"
               id="username"
               name="username"
               type="text"
-              placeholder="jane.doe"
-              value="<%= esc(usernameVal) %>"
+              placeholder="jane_doe"
+              value="${fn:escapeXml(oldValues['username'])}"
               required
             />
+            <c:if test="${errors['username'] != null}">
+              <div class="invalid-feedback">${errors['username']}</div>
+            </c:if>
           </div>
         </div>
 
@@ -296,26 +248,32 @@
           <div>
             <label for="email">Email</label>
             <input
-              class="input <%= fieldErrors.containsKey("email") ? "is-invalid" : "" %>"
+              class="input ${errors['email'] != null ? 'is-invalid' : ''}"
               id="email"
               name="email"
               type="email"
               placeholder="you@oceanview.com"
-              value="<%= esc(emailVal) %>"
+              value="${fn:escapeXml(oldValues['email'])}"
               required
             />
+            <c:if test="${errors['email'] != null}">
+              <div class="invalid-feedback">${errors['email']}</div>
+            </c:if>
           </div>
           <div>
             <label for="contact">Contact Number</label>
             <input
-              class="input <%= fieldErrors.containsKey("contact") ? "is-invalid" : "" %>"
+              class="input ${errors['contact'] != null ? 'is-invalid' : ''}"
               id="contact"
               name="contact"
               type="tel"
               placeholder="0712345678"
-              value="<%= esc(contactVal) %>"
+              value="${fn:escapeXml(oldValues['contact'])}"
               required
             />
+            <c:if test="${errors['contact'] != null}">
+              <div class="invalid-feedback">${errors['contact']}</div>
+            </c:if>
           </div>
         </div>
 
@@ -324,7 +282,7 @@
             <label for="password">Password</label>
             <div class="password-wrap">
               <input
-                class="input <%= fieldErrors.containsKey("password") ? "is-invalid" : "" %>"
+                class="input ${errors['password'] != null ? 'is-invalid' : ''}"
                 id="password"
                 name="password"
                 type="password"
@@ -343,12 +301,15 @@
                 <i class="fa-solid fa-eye" aria-hidden="true"></i>
               </button>
             </div>
+            <c:if test="${errors['password'] != null}">
+              <div class="invalid-feedback">${errors['password']}</div>
+            </c:if>
           </div>
           <div>
             <label for="confirmPassword">Confirm Password</label>
             <div class="password-wrap">
               <input
-                class="input <%= fieldErrors.containsKey("confirmPassword") ? "is-invalid" : "" %>"
+                class="input ${errors['confirmPassword'] != null ? 'is-invalid' : ''}"
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
@@ -367,6 +328,9 @@
                 <i class="fa-solid fa-eye" aria-hidden="true"></i>
               </button>
             </div>
+            <c:if test="${errors['confirmPassword'] != null}">
+              <div class="invalid-feedback">${errors['confirmPassword']}</div>
+            </c:if>
           </div>
         </div>
 
@@ -374,10 +338,9 @@
         <p class="subtitle" style="margin-top: -6px;">Accounts are created as Staff.</p>
 
         <div class="actions">
-          <div id="errorBox" class="alert alert-danger" role="alert"></div>
           <button class="btn" type="submit">Create Account</button>
           <div class="links">
-            <a href="login.jsp">Already have an account? Login</a>
+            <a href="${pageContext.request.contextPath}/login">Already have an account? Login</a>
           </div>
         </div>
       </form>
@@ -388,9 +351,6 @@
     </main>
 
     <script>
-      const form = document.getElementById("registerForm");
-      const errorBox = document.getElementById("errorBox");
-
       const passwordToggles = document.querySelectorAll(".toggle-visibility");
       passwordToggles.forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -413,71 +373,6 @@
           icon.classList.toggle("fa-eye", !isHidden);
           icon.classList.toggle("fa-eye-slash", isHidden);
         });
-      });
-
-      form.addEventListener("submit", (e) => {
-        errorBox.style.display = "none";
-        errorBox.textContent = "";
-
-        const inputs = form.querySelectorAll(".input, select");
-        inputs.forEach((input) => input.classList.remove("is-invalid"));
-
-        const fullName = document.getElementById("fullName").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const username = document.getElementById("username").value.trim();
-        const contact = document.getElementById("contact").value.trim();
-        const password = document.getElementById("password").value;
-        const confirmPassword = document.getElementById("confirmPassword").value;
-
-        const errors = [];
-
-        if (!fullName) {
-          errors.push("Full name is required.");
-          document.getElementById("fullName").classList.add("is-invalid");
-        }
-        if (!email) {
-          errors.push("Email is required.");
-          document.getElementById("email").classList.add("is-invalid");
-        }
-        if (!username) {
-          errors.push("Username is required.");
-          document.getElementById("username").classList.add("is-invalid");
-        }
-        if (!contact) {
-          errors.push("Contact number is required.");
-          document.getElementById("contact").classList.add("is-invalid");
-        }
-        if (!password) {
-          errors.push("Password is required.");
-          document.getElementById("password").classList.add("is-invalid");
-        }
-        if (!confirmPassword) {
-          errors.push("Confirm password is required.");
-          document.getElementById("confirmPassword").classList.add("is-invalid");
-        }
-
-        if (contact && !/^\d{9,12}$/.test(contact)) {
-          errors.push("Contact number must be 9 to 12 digits.");
-          document.getElementById("contact").classList.add("is-invalid");
-        }
-
-        if (password && password.length < 8) {
-          errors.push("Password must be at least 8 characters.");
-          document.getElementById("password").classList.add("is-invalid");
-        }
-
-        if (password && confirmPassword && password !== confirmPassword) {
-          errors.push("Passwords do not match.");
-          document
-            .getElementById("confirmPassword")
-            .classList.add("is-invalid");
-        }
-
-        if (errors.length > 0) {
-          e.preventDefault();
-          errorBox.textContent = errors[0];
-          errorBox.style.display = "block";
-        }
       });
     </script>
   </body>

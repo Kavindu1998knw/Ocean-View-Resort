@@ -1,9 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%
-  String registered = request.getParameter("registered");
-  boolean showRegistered = "1".equals(registered);
-  String error = (String) request.getAttribute("error");
-%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -16,6 +13,7 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/validation.css" />
     <style>
       :root {
         color-scheme: light;
@@ -193,15 +191,6 @@
         font-size: 13px;
       }
 
-      .error {
-        background: #fee2e2;
-        color: #b91c1c;
-        border: 1px solid #fecaca;
-        padding: 10px 12px;
-        border-radius: 10px;
-        font-size: 13px;
-      }
-
       @media (max-width: 420px) {
         .login-card {
           padding: 26px 20px;
@@ -216,38 +205,34 @@
         <p>Sign in to continue</p>
       </div>
 
-      <form action="<%= request.getContextPath() %>/login" method="post">
-        <%
-          if (showRegistered) {
-        %>
-        <div class="notice">Account created successfully. Please sign in.</div>
-        <%
-          }
-        %>
-        <%
-          if (error != null) {
-        %>
-        <div class="error"><%= error %></div>
-        <%
-          }
-        %>
+      <form action="${pageContext.request.contextPath}/login" method="post">
+        <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
+
+        <c:if test="${param.registered == '1'}">
+          <div class="notice">Account created successfully. Please sign in.</div>
+        </c:if>
+
         <div>
           <label for="email">Email</label>
           <input
-            class="input"
+            class="input ${errors['email'] != null ? 'is-invalid' : ''}"
             id="email"
             name="email"
             type="email"
             placeholder="you@example.com"
+            value="${fn:escapeXml(oldValues['email'])}"
             required
           />
+          <c:if test="${errors['email'] != null}">
+            <div class="invalid-feedback">${errors['email']}</div>
+          </c:if>
         </div>
 
         <div>
           <label for="password">Password</label>
           <div class="password-wrap">
             <input
-              class="input"
+              class="input ${errors['password'] != null ? 'is-invalid' : ''}"
               id="password"
               name="password"
               type="password"
@@ -266,6 +251,9 @@
               <i class="fa-solid fa-eye" aria-hidden="true"></i>
             </button>
           </div>
+          <c:if test="${errors['password'] != null}">
+            <div class="invalid-feedback">${errors['password']}</div>
+          </c:if>
         </div>
 
         <div class="actions">
@@ -277,7 +265,7 @@
 
       <div class="footer">
         New here?
-        <a href="<%= request.getContextPath() %>/register.jsp">Create an account</a>
+        <a href="${pageContext.request.contextPath}/register.jsp">Create an account</a>
       </div>
     </main>
 

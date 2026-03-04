@@ -2,18 +2,16 @@ package com.icbt.oceanview.controller;
 
 import com.icbt.oceanview.dao.UserDAO;
 import com.icbt.oceanview.model.User;
+import com.icbt.oceanview.util.validation.RequestUtil;
+import com.icbt.oceanview.util.validation.ValidationResult;
+import com.icbt.oceanview.util.validation.ValidationUtil;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -22,83 +20,68 @@ import javax.servlet.http.HttpServletResponse;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
+  private static final String DEFAULT_ROLE = "STAFF";
+
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     request.setCharacterEncoding("UTF-8");
 
-    String fullName = trimParam(request, "fullName");
-    String username = trimParam(request, "username");
-    String email = trimParam(request, "email");
-    String contact = trimParam(request, "contact");
+    ValidationResult vr = new ValidationResult();
+    RequestUtil.collectOldValues(request, vr, "fullName", "username", "email", "contact");
+
+    String fullName = ValidationUtil.trimToNull(request.getParameter("fullName"));
+    String username = ValidationUtil.trimToNull(request.getParameter("username"));
+    String email = ValidationUtil.trimToNull(request.getParameter("email"));
+    String contact = ValidationUtil.trimToNull(request.getParameter("contact"));
     String password = request.getParameter("password");
     String confirmPassword = request.getParameter("confirmPassword");
-    String role = "STAFF";
 
-    Map<String, String> fieldErrors = new HashMap<>();
-    List<String> errors = new ArrayList<>();
-
-    if (isBlank(fullName)) {
-      fieldErrors.put("fullName", "Full name is required.");
-    }
-    if (isBlank(username)) {
-      fieldErrors.put("username", "Username is required.");
-    }
-    if (isBlank(email)) {
-      fieldErrors.put("email", "Email is required.");
-    }
-    if (isBlank(contact)) {
-      fieldErrors.put("contact", "Contact number is required.");
-    }
-    if (isBlank(password)) {
-      fieldErrors.put("password", "Password is required.");
-    }
-    if (isBlank(confirmPassword)) {
-      fieldErrors.put("confirmPassword", "Confirm password is required.");
-    }
-    if (!isBlank(email) && !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-      fieldErrors.put("email", "Enter a valid email address.");
+    if (ValidationUtil.isBlank(fullName)) {
+      vr.addError("fullName", "Full name is required.");
+    } else if (fullName.length() < 2 || fullName.length() > 100) {
+      vr.addError("fullName", "Full name must be between 2 and 100 characters.");
     }
 
-    if (!isBlank(contact) && !contact.matches("^\\d{9,12}$")) {
-      fieldErrors.put("contact", "Contact number must be 9 to 12 digits.");
+    if (ValidationUtil.isBlank(username)) {
+      vr.addError("username", "Username is required.");
+    } else if (!ValidationUtil.isValidUsername(username)) {
+      vr.addError("username", "Username must be 3-20 characters (letters, digits, underscore).");
     }
 
-    if (!isBlank(password) && password.length() < 8) {
-      fieldErrors.put("password", "Password must be at least 8 characters.");
+    if (ValidationUtil.isBlank(email)) {
+      vr.addError("email", "Email is required.");
+    } else if (!ValidationUtil.isValidEmail(email)) {
+      vr.addError("email", "Enter a valid email address.");
     }
 
-    if (!isBlank(password) && !isBlank(confirmPassword) && !password.equals(confirmPassword)) {
-      fieldErrors.put("confirmPassword", "Passwords do not match.");
+    if (ValidationUtil.isBlank(contact)) {
+      vr.addError("contact", "Contact number is required.");
+    } else if (!ValidationUtil.isValidSriLankaMobile(contact)
+        && !ValidationUtil.isValidPhone10(contact.replaceAll("[^0-9]", ""))) {
+      vr.addError("contact", "Enter a valid contact number.");
     }
 
-    if (!fieldErrors.isEmpty()) {
-      errors.add("Please fix the highlighted fields and try again.");
-      forwardWithErrors(
-          request,
-          response,
-          errors,
-          fieldErrors,
-          fullName,
-          username,
-          email,
-          contact);
-      return;
+    if (ValidationUtil.isBlank(password)) {
+      vr.addError("password", "Password is required.");
+    } else if (!ValidationUtil.isStrongPassword(password)) {
+      vr.addError("password", "Password must be at least 8 characters.");
+    }
+
+    if (ValidationUtil.isBlank(confirmPassword)) {
+      vr.addError("confirmPassword", "Confirm password is required.");
+    } else if (password != null && !password.equals(confirmPassword)) {
+      vr.addError("confirmPassword", "Passwords do not match.");
     }
 
     UserDAO userDAO = new UserDAO();
-    if (userDAO.emailExists(email)) {
-      fieldErrors.put("email", "An account with this email already exists.");
-      errors.add("This email is already registered. Please use a different email.");
-      forwardWithErrors(
-          request,
-          response,
-          errors,
-          fieldErrors,
-          fullName,
-          username,
-          email,
-          contact);
+    if (vr.error("email") == null && email != null && userDAO.emailExists(email)) {
+      vr.addError("email", "This email is already registered.");
+    }
+
+    if (vr.hasErrors()) {
+      vr.addError("global", "Please fix the highlighted fields and try again.");
+      RequestUtil.forwardWithErrors(request, response, "/register.jsp", vr);
       return;
     }
 
@@ -106,63 +89,22 @@ public class RegisterServlet extends HttpServlet {
     try {
       hashedPassword = hashPassword(password);
     } catch (SQLException e) {
-      forwardWithErrors(
-          request,
-          response,
-          Collections.singletonList("Registration failed. Please try again."),
-          new HashMap<>(),
-          fullName,
-          username,
-          email,
-          contact);
+      vr.addError("global", "Registration failed. Please try again.");
+      RequestUtil.forwardWithErrors(request, response, "/register.jsp", vr);
       return;
     }
 
-    User user = User.newForRegistration(fullName, email, hashedPassword, role, true, LocalDateTime.now());
+    User user =
+        User.newForRegistration(fullName, email, hashedPassword, DEFAULT_ROLE, true, LocalDateTime.now());
     boolean created = userDAO.insert(user);
 
     if (created) {
-      response.sendRedirect("login.jsp?registered=1");
+      response.sendRedirect(request.getContextPath() + "/login?registered=1");
       return;
     }
 
-    forwardWithErrors(
-        request,
-        response,
-        Collections.singletonList("Registration failed. Please try again."),
-        new HashMap<>(),
-        fullName,
-        username,
-        email,
-        contact);
-  }
-
-  private String trimParam(HttpServletRequest request, String name) {
-    String value = request.getParameter(name);
-    return value == null ? "" : value.trim();
-  }
-
-  private boolean isBlank(String value) {
-    return value == null || value.trim().isEmpty();
-  }
-
-  private void forwardWithErrors(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      List<String> messages,
-      Map<String, String> fieldErrors,
-      String fullName,
-      String username,
-      String email,
-      String contact)
-      throws ServletException, IOException {
-    request.setAttribute("errors", messages);
-    request.setAttribute("fieldErrors", fieldErrors);
-    request.setAttribute("fullName", fullName);
-    request.setAttribute("username", username);
-    request.setAttribute("email", email);
-    request.setAttribute("contact", contact);
-    request.getRequestDispatcher("register.jsp").forward(request, response);
+    vr.addError("global", "Registration failed. Please try again.");
+    RequestUtil.forwardWithErrors(request, response, "/register.jsp", vr);
   }
 
   private String hashPassword(String password) throws SQLException {

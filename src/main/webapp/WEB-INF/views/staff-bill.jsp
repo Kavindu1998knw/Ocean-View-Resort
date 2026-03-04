@@ -1,5 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -108,27 +109,24 @@
         <a class="btn btn-outline-secondary no-print" href="${pageContext.request.contextPath}/dashboard">Back to Dashboard</a>
     </div>
 
-    <c:if test="${not empty error}">
-        <div class="alert alert-danger" role="alert">${error}</div>
-    </c:if>
-    <c:if test="${not empty notFound}">
-        <div class="alert alert-warning" role="alert">No reservation found.</div>
-    </c:if>
-
-    <form method="get" action="${pageContext.request.contextPath}/bill" class="card card-soft mb-4 no-print" id="billForm">
+    <form method="post" action="${pageContext.request.contextPath}/bill" class="card card-soft mb-4 no-print" id="billForm">
         <div class="card-body p-4">
+            <%@ include file="/WEB-INF/views/common/form-validation.jspf" %>
             <div class="row g-3 align-items-end">
                 <div class="col-md-9">
                     <label for="reservationNo" class="form-label">Reservation Number</label>
                     <input
                         type="text"
-                        class="form-control"
+                        class="form-control ${errors['reservationNo'] != null ? 'is-invalid' : ''}"
                         id="reservationNo"
                         name="reservationNo"
-                        value="${param.reservationNo}"
+                        value="${fn:escapeXml(empty oldValues['reservationNo'] ? param.reservationNo : oldValues['reservationNo'])}"
                         placeholder="e.g., RES-20260212-9133"
                         required
                     >
+                    <c:if test="${errors['reservationNo'] != null}">
+                        <div class="invalid-feedback">${errors['reservationNo']}</div>
+                    </c:if>
                 </div>
                 <div class="col-md-3 d-grid">
                     <button type="submit" class="btn btn-primary">Calculate</button>
@@ -196,7 +194,7 @@
             <div class="print-card">
                 <div class="print-header">
                     <div>
-                        <h1 class="print-title">Ocean View Resort â€“ Bill</h1>
+                        <h1 class="print-title">Ocean View Resort - Bill</h1>
                         <div class="print-meta">Printed on <span class="print-date" data-print-date></span></div>
                     </div>
                     <div class="print-meta text-end">
@@ -308,4 +306,3 @@
 </script>
 </body>
 </html>
-
