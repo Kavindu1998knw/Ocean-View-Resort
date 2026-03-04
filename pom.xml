@@ -33,6 +33,6 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>Ocean-View-Resort</finalName>
+    <finalName>ROOT</finalName>
   </build>
 </project>

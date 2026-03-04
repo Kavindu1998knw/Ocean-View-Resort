@@ -1,0 +1,14 @@
+.git
+.gitignore
+.idea
+.mvn
+.m2repo
+target
+validation-refactor.diff
+Dockerfile*
+README*
+*.iml
+*.log
+node_modules
+tmp
+temp
